@@ -55,7 +55,8 @@ int16_t GetWordDisplacement(char *ch, int instruction_index)
 
 void PrintAddressCalculation(char *ch, int instruction_index, char bottom_three_bits_mask)
 {
-    switch(ch[instruction_index+1] & bottom_three_bits_mask)
+    uint8_t addressing_mode = ch[instruction_index+1] & bottom_three_bits_mask;
+    switch(addressing_mode)
     {
         case 0b000: printf("[BX + SI] "); break;
         case 0b001: printf("[BX + DI] "); break;
@@ -70,7 +71,8 @@ void PrintAddressCalculation(char *ch, int instruction_index, char bottom_three_
 
 void PrintAddressCalculation(char *ch, int instruction_index, char bottom_three_bits_mask, int16_t displacement)
 {
-    switch(ch[instruction_index+1] & bottom_three_bits_mask)
+    uint8_t addressing_mode = ch[instruction_index+1] & bottom_three_bits_mask;
+    switch(addressing_mode)
     {
         case 0b000: printf("[BX + SI + %d] ", displacement); break;
         case 0b001: printf("[BX + DI + %d] ", displacement); break;
@@ -104,9 +106,10 @@ int main()
     }
 
 #if 1
-    char mov_mask = 0b10001000;
+    char mov_mask               = 0b10001000;
     char immediate_reg_mov_mask = 0b10110000;
-    int instruction_index = 0;
+    int instruction_index       = 0;
+
     while(instruction_index < MAX_INSTRUCTIONS)
     {
         bool isImmediate = false;
@@ -126,7 +129,6 @@ int main()
 
         char w_mask = isImmediate ? 8 : 1;
         char d_mask = 2;
-
         char bottom_three_bits_mask = 7;
 
         char registers[MAX_REGISTERS][REGISTER_CHAR_LENGTH] = {"AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH",
