@@ -6,7 +6,7 @@
 #define REGISTER_CHAR_LENGTH 3
 #define MAX_INSTRUCTIONS 40
 
-char *SetRegister(char *ch, int index, int bottom_three_bits_mask, char w_mask, 
+char *SetRegister(char *ch, int index, char bottom_three_bits_mask, char w_mask, 
                   char registers[MAX_REGISTERS][REGISTER_CHAR_LENGTH],
                   bool isImmediate, bool is_register_one)
 {
@@ -44,6 +44,43 @@ void PrintRegister(char *reg)
         printf("%c", reg[i]);
     }
     printf(" ");
+}
+
+int16_t GetWordDisplacement(char *ch, int instruction_index) 
+{
+    int16_t result = ((ch[instruction_index+2] & 0xFF) << 8) | (ch[instruction_index+1] & 0xFF);
+
+    return result;
+}
+
+void PrintAddressCalculation(char *ch, int instruction_index, char bottom_three_bits_mask)
+{
+    switch(ch[instruction_index+1] & bottom_three_bits_mask)
+    {
+        case 0b000: printf("[BX + SI] "); break;
+        case 0b001: printf("[BX + DI] "); break;
+        case 0b010: printf("[BP + SI] "); break;
+        case 0b011: printf("[BP + DI] "); break;
+        case 0b100: printf("[SI] ");      break;
+        case 0b101: printf("[DI] ");      break;
+        case 0b110: printf("[BP] ");      break;
+        case 0b111: printf("[BX] ");      break;
+    }
+}
+
+void PrintAddressCalculation(char *ch, int instruction_index, char bottom_three_bits_mask, int16_t displacement)
+{
+    switch(ch[instruction_index+1] & bottom_three_bits_mask)
+    {
+        case 0b000: printf("[BX + SI + %d] ", displacement); break;
+        case 0b001: printf("[BX + DI + %d] ", displacement); break;
+        case 0b010: printf("[BP + SI + %d] ", displacement); break;
+        case 0b011: printf("[BP + DI + %d] ", displacement); break;
+        case 0b100: printf("[SI + %d] ", displacement);      break;
+        case 0b101: printf("[DI + %d] ", displacement);      break;
+        case 0b110: printf("[BP + %d] ", displacement);      break;
+        case 0b111: printf("[BX + %d] ", displacement);      break;
+    }
 }
 
 int main()
@@ -105,8 +142,8 @@ int main()
 
             if(ch[instruction_index] & w_mask)
             {
-                int16_t temp = ((ch[instruction_index+2] & 0xFF) << 8) | (ch[instruction_index+1] & 0xFF);
-                printf("%d\n", temp);
+                int16_t displacement = GetWordDisplacement(ch, instruction_index);
+                printf("%d\n", displacement);
 
                 instruction_index += 3;
             }
@@ -156,32 +193,11 @@ int main()
                 if(ch[instruction_index] & d_mask)
                 {
                     PrintRegister(reg);
-
-                    switch(ch[instruction_index+1] & bottom_three_bits_mask)
-                    {
-                        case 0b000: printf("[BX + SI] "); break;
-                        case 0b001: printf("[BX + DI] "); break;
-                        case 0b010: printf("[BP + SI] "); break;
-                        case 0b011: printf("[BP + DI] "); break;
-                        case 0b100: printf("[SI] ");      break;
-                        case 0b101: printf("[DI] ");      break;
-                        case 0b110: printf("[BP] ");      break;
-                        case 0b111: printf("[BX] ");      break;
-                    }
+                    PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
                 }
                 else 
                 {
-                    switch(ch[instruction_index+1] & bottom_three_bits_mask)
-                    {
-                        case 0b000: printf("[BX + SI] "); break;
-                        case 0b001: printf("[BX + DI] "); break;
-                        case 0b010: printf("[BP + SI] "); break;
-                        case 0b011: printf("[BP + DI] "); break;
-                        case 0b100: printf("[SI] ");      break;
-                        case 0b101: printf("[DI] ");      break;
-                        case 0b110: printf("[BP] ");      break;
-                        case 0b111: printf("[BX] ");      break;
-                    }
+                    PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
                     PrintRegister(reg);
                 }
                 printf("\n");
@@ -197,31 +213,12 @@ int main()
 
                 if(!(ch[instruction_index+2]))
                 {
-                    switch(ch[instruction_index+1] & bottom_three_bits_mask)
-                    {
-                        case 0b000: printf("[BX + SI] "); break;
-                        case 0b001: printf("[BX + DI] "); break;
-                        case 0b010: printf("[BP + SI] "); break;
-                        case 0b011: printf("[BP + DI] "); break;
-                        case 0b100: printf("[SI] ");      break;
-                        case 0b101: printf("[DI] ");      break;
-                        case 0b110: printf("[BP] ");      break;
-                        case 0b111: printf("[BX] ");      break;
-                    }
+                    PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
                 }
                 else 
                 {
-                    switch(ch[instruction_index+1] & bottom_three_bits_mask)
-                    {
-                        case 0b000: printf("[BX + SI + %d] ", ch[instruction_index+2]); break;
-                        case 0b001: printf("[BX + DI + %d] ", ch[instruction_index+2]); break;
-                        case 0b010: printf("[BP + SI + %d] ", ch[instruction_index+2]); break;
-                        case 0b011: printf("[BP + DI + %d] ", ch[instruction_index+2]); break;
-                        case 0b100: printf("[SI + %d] ", ch[instruction_index+2]);      break;
-                        case 0b101: printf("[DI + %d] ", ch[instruction_index+2]);      break;
-                        case 0b110: printf("[BP + %d] ", ch[instruction_index+2]);      break;
-                        case 0b111: printf("[BX + %d] ", ch[instruction_index+2]);      break;
-                    }
+                    int8_t displacement = ch[instruction_index+2]; 
+                    PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, displacement);
                 }
 
                 printf("\n");
@@ -235,34 +232,14 @@ int main()
 
                 PrintRegister(reg);
 
-                int16_t displacement = ((ch[instruction_index+3] & 0xFF) << 8) | (ch[instruction_index+2] & 0xFF);
+                int16_t displacement = GetWordDisplacement(ch, instruction_index);
                 if(displacement == 0)
                 {
-                    switch(ch[instruction_index+1] & bottom_three_bits_mask)
-                    {
-                        case 0b000: printf("[BX + SI] "); break;
-                        case 0b001: printf("[BX + DI] "); break;
-                        case 0b010: printf("[BP + SI] "); break;
-                        case 0b011: printf("[BP + DI] "); break;
-                        case 0b100: printf("[SI] ");      break;
-                        case 0b101: printf("[DI] ");      break;
-                        case 0b110: printf("[BP] ");      break;
-                        case 0b111: printf("[BX] ");      break;
-                    }
+                    PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
                 }
                 else 
                 {
-                    switch(ch[instruction_index+1] & bottom_three_bits_mask)
-                    {
-                        case 0b000: printf("[BX + SI + %d] ", displacement); break;
-                        case 0b001: printf("[BX + DI + %d] ", displacement); break;
-                        case 0b010: printf("[BP + SI + %d] ", displacement); break;
-                        case 0b011: printf("[BP + DI + %d] ", displacement); break;
-                        case 0b100: printf("[SI + %d] ", displacement);      break;
-                        case 0b101: printf("[DI + %d] ", displacement);      break;
-                        case 0b110: printf("[BP + %d] ", displacement);      break;
-                        case 0b111: printf("[BX + %d] ", displacement);      break;
-                    }
+                    PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, displacement);
                 }
 
                 printf("\n");
