@@ -153,20 +153,37 @@ int main()
                 reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
                                   w_mask, registers, isImmediate, true);
 
-                PrintRegister(reg);
-
-                switch(ch[instruction_index+1] & bottom_three_bits_mask)
+                if(ch[instruction_index] & d_mask)
                 {
-                    case 0b000: printf("[BX + SI] "); break;
-                    case 0b001: printf("[BX + DI] "); break;
-                    case 0b010: printf("[BP + SI] "); break;
-                    case 0b011: printf("[BP + DI] "); break;
-                    case 0b100: printf("[SI] ");      break;
-                    case 0b101: printf("[DI] ");      break;
-                    case 0b110: printf("[BP] ");      break;
-                    case 0b111: printf("[BX] ");      break;
-                }
+                    PrintRegister(reg);
 
+                    switch(ch[instruction_index+1] & bottom_three_bits_mask)
+                    {
+                        case 0b000: printf("[BX + SI] "); break;
+                        case 0b001: printf("[BX + DI] "); break;
+                        case 0b010: printf("[BP + SI] "); break;
+                        case 0b011: printf("[BP + DI] "); break;
+                        case 0b100: printf("[SI] ");      break;
+                        case 0b101: printf("[DI] ");      break;
+                        case 0b110: printf("[BP] ");      break;
+                        case 0b111: printf("[BX] ");      break;
+                    }
+                }
+                else 
+                {
+                    switch(ch[instruction_index+1] & bottom_three_bits_mask)
+                    {
+                        case 0b000: printf("[BX + SI] "); break;
+                        case 0b001: printf("[BX + DI] "); break;
+                        case 0b010: printf("[BP + SI] "); break;
+                        case 0b011: printf("[BP + DI] "); break;
+                        case 0b100: printf("[SI] ");      break;
+                        case 0b101: printf("[DI] ");      break;
+                        case 0b110: printf("[BP] ");      break;
+                        case 0b111: printf("[BX] ");      break;
+                    }
+                    PrintRegister(reg);
+                }
                 printf("\n");
 
                 instruction_index += 2;
