@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <cstdint>
+#include <stdint.h>
 
 #define MAX_BUFFER_SIZE 256
 #define MAX_REGISTERS 16
@@ -8,11 +8,11 @@
 
 char *SetRegister(char *ch, int index, char bottom_three_bits_mask, char w_mask, 
                   char registers[MAX_REGISTERS][REGISTER_CHAR_LENGTH],
-                  bool isImmediate, bool is_register_one)
+                  bool isImmediateReg, bool is_register_one)
 {
     char *result;
     char temp;
-    if(isImmediate)
+    if(isImmediateReg)
     {
         temp = ch[index] & bottom_three_bits_mask;
     }
@@ -46,9 +46,9 @@ void PrintRegister(char *reg)
     printf(" ");
 }
 
-int16_t GetWordDisplacement(char *ch, int instruction_index, bool isImmediate) 
+int16_t GetWordDisplacement(char *ch, int instruction_index, bool isImmediateReg) 
 {
-    int16_t result = isImmediate ? ((ch[instruction_index+2] & 0xFF) << 8) | (ch[instruction_index+1] & 0xFF) :
+    int16_t result = isImmediateReg ? ((ch[instruction_index+2] & 0xFF) << 8) | (ch[instruction_index+1] & 0xFF) :
                                     ((ch[instruction_index+3] & 0xFF) << 8) | (ch[instruction_index+2] & 0xFF);
 
     return result;
@@ -86,6 +86,13 @@ void PrintAddressCalculation(char *ch, int instruction_index, char bottom_three_
     }
 }
 
+enum Mov_Type : char
+{
+    Mov_RegMov,
+    Mov_ImmediateMem,
+    Mov_ImmediateReg,
+};
+
 int main()
 {
     FILE *file;
@@ -108,27 +115,36 @@ int main()
 
 #if 1
     char mov_mask               = 0b10001000;
-    char immediate_reg_mov_mask = 0b10110000;
+    char mem_immediate_mov_mask = 0b11000110;
+    char reg_immediate_mov_mask = 0b10110000;
     int instruction_index       = 0;
 
     while(instruction_index < MAX_INSTRUCTIONS)
     {
-        bool isImmediate = false;
+        bool isImmediateReg = false;
+        Mov_Type mov_type;
         if((ch[instruction_index] >> 2) == (mov_mask >> 2))
         {
             printf("MOV ");
+            mov_type = Mov_RegMov;
         }
-        else if((ch[instruction_index] >> 4) == (immediate_reg_mov_mask >> 4))
+        else if((ch[instruction_index] >> 1) == (mem_immediate_mov_mask >> 1))
         {
             printf("MOV ");
-            isImmediate = true;
+            mov_type = Mov_ImmediateMem;
+        }
+        else if((ch[instruction_index] >> 4) == (reg_immediate_mov_mask >> 4))
+        {
+            printf("MOV ");
+            isImmediateReg = true;
+            mov_type = Mov_ImmediateReg; 
         }
         else 
         {
             printf("Something went horribly wrong!");
         }
 
-        char w_mask = isImmediate ? 8 : 1;
+        char w_mask = isImmediateReg ? 8 : 1;
         char d_mask = 2;
         char bottom_three_bits_mask = 7;
 
@@ -137,164 +153,227 @@ int main()
 
         char *reg;
 
-        // Check to see if the MOV is immediate. If it is we don't need
-        // another byte for instructions and instead check the second (and possibly third)
-        // byte to see what calue we directly move into the register
-        if(isImmediate)
+        // If it's not an immediate mov we have to check the mod bits 
+        // to figure out what kind of MOV we are going to do, and how 
+        // to inteprate the following bytes.
+        const char mem_mode   = 0b00000000;
+        const char mem_mode8  = 0b01000000;
+        const char mem_mode16 = 0b10000000;
+        const char reg_mode   = 0b11000000;
+
+        char mod_mask = 0b11000000;
+        char mod = ch[instruction_index+1] & mod_mask;
+
+        switch(mov_type)
         {
-            reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
-                              w_mask, registers, isImmediate, false);
-
-            PrintRegister(reg);
-
-            if(ch[instruction_index] & w_mask)
+            case Mov_ImmediateReg:
             {
-                int16_t displacement = GetWordDisplacement(ch, instruction_index, isImmediate);
-                printf("%d\n", displacement);
+                reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
+                                  w_mask, registers, isImmediateReg, false);
 
-                instruction_index += 3;
-            }
-            else  
-            {
-                printf("%d\n", ch[instruction_index+1]);
+                PrintRegister(reg);
 
-                instruction_index += 2;
-            }
-        }
-        else 
-        {
-            // If it's not an immediate mov we have to check the mod bits 
-            // to figure out what kind of MOV we are going to do, and how 
-            // to inteprate the following bytes.
-            const char mem_mode   = 0b00000000;
-            const char mem_mode8  = 0b01000000;
-            const char mem_mode16 = 0b10000000;
-            const char reg_mode   = 0b11000000;
-
-            char mod_mask = 0b11000000;
-            char mod = ch[instruction_index+1] & mod_mask;
-
-            switch(mod)
-            {
-                case reg_mode:
+                if(ch[instruction_index] & w_mask)
                 {
-                    reg = SetRegister(ch, instruction_index, bottom_three_bits_mask, 
-                                      w_mask, registers, isImmediate, true);
-                    char *reg_two = SetRegister(ch, instruction_index, bottom_three_bits_mask, 
-                                                w_mask, registers, isImmediate, false);
-                    if(ch[instruction_index] & d_mask)
-                    {
-                        PrintRegister(reg);
-                        PrintRegister(reg_two);
-                        printf("\n");
-                    }
-                    else 
-                    {
-                        PrintRegister(reg_two);
-                        PrintRegister(reg);
-                        printf("\n");
-                    }
+                    int16_t displacement = GetWordDisplacement(ch, instruction_index, isImmediateReg);
+                    printf("%d\n", displacement);
 
-                    instruction_index += 2;
-                } break;
-                case mem_mode:
-                {
-                    reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
-                                      w_mask, registers, isImmediate, true);
-
-                    if(ch[instruction_index] & d_mask)
-                    {
-                        PrintRegister(reg);
-                        PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
-                    }
-                    else 
-                    {
-                        PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
-                        PrintRegister(reg);
-                    }
-                    printf("\n");
-
-                    instruction_index += 2;
-                } break;
-                case mem_mode8:
-                {
-                    reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
-                                      w_mask, registers, isImmediate, true);
-
-                    if(ch[instruction_index] & d_mask)
-                    {
-                        PrintRegister(reg);
-
-                        if(!(ch[instruction_index+2]))
-                        {
-                            PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
-                        }
-                        else 
-                        {
-                            int8_t displacement = ch[instruction_index+2]; 
-                            PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, displacement);
-                        }
-                    }
-                    else 
-                    {
-                        if(!(ch[instruction_index+2]))
-                        {
-                            PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
-                        }
-                        else 
-                        {
-                            int8_t displacement = ch[instruction_index+2]; 
-                            PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, displacement);
-                        }
-
-                        PrintRegister(reg);
-                    }
-
-                    printf("\n");
                     instruction_index += 3;
-                    
-                } break;
-                case mem_mode16:
+                }
+                else  
                 {
-                    reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
-                                      w_mask, registers, isImmediate, true);
+                    printf("%d\n", ch[instruction_index+1]);
 
-                    if(ch[instruction_index] & d_mask)
-                    {
-                        PrintRegister(reg);
-
-                        int16_t displacement = GetWordDisplacement(ch, instruction_index, isImmediate);
-                        if(displacement == 0)
-                        {
-                            PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
-                        }
-                        else 
-                        {
-                            PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, displacement);
-                        }
-                    }
-                    else 
-                    {
-                        int16_t displacement = GetWordDisplacement(ch, instruction_index, isImmediate);
-                        if(displacement == 0)
-                        {
-                            PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
-                        }
-                        else 
-                        {
-                            PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, displacement);
-                        }
-
-                        PrintRegister(reg);
-                    }
-
-                    printf("\n");
-                    instruction_index += 4;
-                } break;
-                default:
-                {
                     instruction_index += 2;
                 }
+            } break ;
+            case Mov_ImmediateMem:
+            {
+                switch(mod)
+                {
+                    case mem_mode:
+                    {
+                        PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
+                        if(ch[instruction_index] & w_mask)
+                        {
+                            int16_t value = GetWordDisplacement(ch, instruction_index, false);
+                            printf("WORD %d\n", value);
+                            instruction_index += 4;
+                        }
+                        else 
+                        {
+                            int8_t value = ch[instruction_index+2];
+                            printf("BYTE %d\n", value);
+                            instruction_index += 3;
+                        }
+                    } break;
+                    case mem_mode8:
+                    {
+                        int8_t displacement = ch[instruction_index+2];
+                        PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, displacement);
+                        if(ch[instruction_index] & w_mask)
+                        {
+
+                            uint8_t instruction_index_offset = instruction_index + 2;
+                            int16_t value = GetWordDisplacement(ch, instruction_index_offset, true);
+                            printf("WORD %d\n", value);
+                            instruction_index += 5;
+                        }
+                        else 
+                        {
+                            int8_t value = ch[instruction_index+3];
+                            printf("BYTE %d\n", value);
+                            instruction_index += 4;
+                        }
+                    } break;
+                    case mem_mode16:
+                    {
+                        int16_t displacement = GetWordDisplacement(ch, instruction_index, false); 
+                        PrintAddressCalculation(ch, instruction_index , bottom_three_bits_mask, displacement);
+                        if(ch[instruction_index] & w_mask)
+                        {
+                            uint8_t instruction_index_offset = instruction_index + 3;
+                            int16_t value = GetWordDisplacement(ch, instruction_index_offset, true);
+                            printf("WORD %d\n", value);
+                            instruction_index += 5;
+                        }
+                        else 
+                        {
+                            int8_t value = ch[instruction_index+4];
+                            printf("BYTE %d\n", value);
+                            instruction_index += 6;
+                        }
+                    } break; 
+                }
+            } break ;
+            case Mov_RegMov: 
+            {
+                switch(mod)
+                {
+                    case reg_mode:
+                    {
+                        reg = SetRegister(ch, instruction_index, bottom_three_bits_mask, 
+                                          w_mask, registers, isImmediateReg, true);
+                        char *reg_two = SetRegister(ch, instruction_index, bottom_three_bits_mask, 
+                                                    w_mask, registers, isImmediateReg, false);
+                        if(ch[instruction_index] & d_mask)
+                        {
+                            PrintRegister(reg);
+                            PrintRegister(reg_two);
+                            printf("\n");
+                        }
+                        else 
+                        {
+                            PrintRegister(reg_two);
+                            PrintRegister(reg);
+                            printf("\n");
+                        }
+
+                        instruction_index += 2;
+                    } break;
+                    case mem_mode:
+                    {
+                        reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
+                                          w_mask, registers, isImmediateReg, true);
+
+                        if(ch[instruction_index] & d_mask)
+                        {
+                            PrintRegister(reg);
+                            PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
+                        }
+                        else 
+                        {
+                            PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
+                            PrintRegister(reg);
+                        }
+                        printf("\n");
+
+                        instruction_index += 2;
+                    } break;
+                    case mem_mode8:
+                    {
+                        reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
+                                          w_mask, registers, isImmediateReg, true);
+
+                        if(ch[instruction_index] & d_mask)
+                        {
+                            PrintRegister(reg);
+
+                            if(!(ch[instruction_index+2]))
+                            {
+                                PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
+                            }
+                            else 
+                            {
+                                int8_t displacement = ch[instruction_index+2]; 
+                                PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, displacement);
+                            }
+                        }
+                        else 
+                        {
+                            if(!(ch[instruction_index+2]))
+                            {
+                                PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
+                            }
+                            else 
+                            {
+                                int8_t displacement = ch[instruction_index+2]; 
+                                PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, displacement);
+                            }
+
+                            PrintRegister(reg);
+                        }
+
+                        printf("\n");
+                        instruction_index += 3;
+                        
+                    } break;
+                    case mem_mode16:
+                    {
+                        reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
+                                          w_mask, registers, isImmediateReg, true);
+
+                        if(ch[instruction_index] & d_mask)
+                        {
+                            PrintRegister(reg);
+
+                            int16_t displacement = GetWordDisplacement(ch, instruction_index, isImmediateReg);
+                            if(displacement == 0)
+                            {
+                                PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
+                            }
+                            else 
+                            {
+                                PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, displacement);
+                            }
+                        }
+                        else 
+                        {
+                            int16_t displacement = GetWordDisplacement(ch, instruction_index, isImmediateReg);
+                            if(displacement == 0)
+                            {
+                                PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
+                            }
+                            else 
+                            {
+                                PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, displacement);
+                            }
+
+                            PrintRegister(reg);
+                        }
+
+                        printf("\n");
+                        instruction_index += 4;
+                    } break;
+                    default:
+                    {
+                        instruction_index += 2;
+                    }
+                }
+            } break ;
+            default:
+            {
+                printf("Something went horribly horribly wrong!");
             }
         }
     }
