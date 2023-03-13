@@ -6,13 +6,20 @@
 #define REGISTER_CHAR_LENGTH 3
 #define MAX_INSTRUCTIONS 40
 
+enum Mov_Type : char
+{
+    Mov_RegMov,
+    Mov_ImmediateMem,
+    Mov_ImmediateReg,
+};
+
 char *SetRegister(char *ch, int index, char bottom_three_bits_mask, char w_mask, 
                   char registers[MAX_REGISTERS][REGISTER_CHAR_LENGTH],
-                  bool isImmediateReg, bool is_register_one)
+                  Mov_Type mov_type, bool is_register_one)
 {
     char *result;
     char temp;
-    if(isImmediateReg)
+    if(mov_type == Mov_ImmediateReg)
     {
         temp = ch[index] & bottom_three_bits_mask;
     }
@@ -46,11 +53,9 @@ void PrintRegister(char *reg)
     printf(" ");
 }
 
-int16_t GetWordDisplacement(char *ch, int instruction_index, bool isImmediateReg) 
+int16_t GetWordValue(char *ch, int instruction_index) 
 {
-    int16_t result = isImmediateReg ? ((ch[instruction_index+2] & 0xFF) << 8) | (ch[instruction_index+1] & 0xFF) :
-                                    ((ch[instruction_index+3] & 0xFF) << 8) | (ch[instruction_index+2] & 0xFF);
-
+    int16_t result = ((ch[instruction_index+2] & 0xFF) << 8) | (ch[instruction_index+1] & 0xFF);
     return result;
 }
 
@@ -86,19 +91,37 @@ void PrintAddressCalculation(char *ch, int instruction_index, char bottom_three_
     }
 }
 
-enum Mov_Type : char
+void CalculateImmediateMemoryValue(char *ch, int instruction_index, int *index_counter, char w_mask,
+                                   int bytes_before_value, int bytes_before_next_instruction)
 {
-    Mov_RegMov,
-    Mov_ImmediateMem,
-    Mov_ImmediateReg,
-};
+    if(ch[instruction_index] & w_mask)
+    {
+        int index_offset = bytes_before_value;
+        int16_t value = GetWordValue(ch, index_offset);
+        printf("WORD %d\n", value);
+        bytes_before_next_instruction += 1;
+        *index_counter += bytes_before_next_instruction;
+    }
+    else 
+    {
+        int8_t value = ch[bytes_before_value+1];
+        printf("BYTE %d\n", value);
+        *index_counter += bytes_before_next_instruction;
+    }
+}
 
 int main()
 {
     FILE *file;
     char ch[MAX_BUFFER_SIZE] = {};
 
+#if 0
+    file = fopen("more_movs", "rb");
+#endif
+
+#if 1
     file = fopen("challenge", "rb");
+#endif
 
     printf("The assembly instructions of this file is: \n");
 
@@ -121,7 +144,7 @@ int main()
 
     while(instruction_index < MAX_INSTRUCTIONS)
     {
-        bool isImmediateReg = false;
+        int index_counter = 0;
         Mov_Type mov_type;
         if((ch[instruction_index] >> 2) == (mov_mask >> 2))
         {
@@ -136,7 +159,6 @@ int main()
         else if((ch[instruction_index] >> 4) == (reg_immediate_mov_mask >> 4))
         {
             printf("MOV ");
-            isImmediateReg = true;
             mov_type = Mov_ImmediateReg; 
         }
         else 
@@ -144,7 +166,7 @@ int main()
             printf("Something went horribly wrong!");
         }
 
-        char w_mask = isImmediateReg ? 8 : 1;
+        char w_mask = mov_type == Mov_ImmediateReg ? 8 : 1;
         char d_mask = 2;
         char bottom_three_bits_mask = 7;
 
@@ -164,85 +186,73 @@ int main()
         char mod_mask = 0b11000000;
         char mod = ch[instruction_index+1] & mod_mask;
 
+        int bytes_before_value;
+        int bytes_before_next_instruction;
+
         switch(mov_type)
         {
             case Mov_ImmediateReg:
             {
                 reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
-                                  w_mask, registers, isImmediateReg, false);
+                                  w_mask, registers, mov_type, false);
 
                 PrintRegister(reg);
 
                 if(ch[instruction_index] & w_mask)
                 {
-                    int16_t displacement = GetWordDisplacement(ch, instruction_index, isImmediateReg);
+                    int16_t displacement = GetWordValue(ch, instruction_index);
                     printf("%d\n", displacement);
 
-                    instruction_index += 3;
+                    index_counter += 3;
                 }
                 else  
                 {
                     printf("%d\n", ch[instruction_index+1]);
 
-                    instruction_index += 2;
+                    index_counter += 2;
                 }
             } break ;
             case Mov_ImmediateMem:
             {
                 switch(mod)
                 {
+                    case reg_mode:
+                    {
+                        printf("This should never get hit");
+                        index_counter += 2;
+                    } break;
                     case mem_mode:
                     {
+
                         PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
-                        if(ch[instruction_index] & w_mask)
-                        {
-                            int16_t value = GetWordDisplacement(ch, instruction_index, false);
-                            printf("WORD %d\n", value);
-                            instruction_index += 4;
-                        }
-                        else 
-                        {
-                            int8_t value = ch[instruction_index+2];
-                            printf("BYTE %d\n", value);
-                            instruction_index += 3;
-                        }
+
+                        bytes_before_value = instruction_index + 1;
+                        bytes_before_next_instruction = 3;
+                        CalculateImmediateMemoryValue(ch, instruction_index, &index_counter, w_mask,
+                                                      bytes_before_value, bytes_before_next_instruction);
                     } break;
                     case mem_mode8:
                     {
-                        int8_t displacement = ch[instruction_index+2];
-                        PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, displacement);
-                        if(ch[instruction_index] & w_mask)
-                        {
+                        int8_t address_displacement = ch[instruction_index+2];
+                        PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask, 
+                                                address_displacement);
 
-                            uint8_t instruction_index_offset = instruction_index + 2;
-                            int16_t value = GetWordDisplacement(ch, instruction_index_offset, true);
-                            printf("WORD %d\n", value);
-                            instruction_index += 5;
-                        }
-                        else 
-                        {
-                            int8_t value = ch[instruction_index+3];
-                            printf("BYTE %d\n", value);
-                            instruction_index += 4;
-                        }
+                        bytes_before_value = instruction_index + 2;
+                        bytes_before_next_instruction = 4;
+                        CalculateImmediateMemoryValue(ch, instruction_index, &index_counter, w_mask,
+                                                      bytes_before_value, bytes_before_next_instruction);
                     } break;
                     case mem_mode16:
                     {
-                        int16_t displacement = GetWordDisplacement(ch, instruction_index, false); 
-                        PrintAddressCalculation(ch, instruction_index , bottom_three_bits_mask, displacement);
-                        if(ch[instruction_index] & w_mask)
-                        {
-                            uint8_t instruction_index_offset = instruction_index + 3;
-                            int16_t value = GetWordDisplacement(ch, instruction_index_offset, true);
-                            printf("WORD %d\n", value);
-                            instruction_index += 5;
-                        }
-                        else 
-                        {
-                            int8_t value = ch[instruction_index+4];
-                            printf("BYTE %d\n", value);
-                            instruction_index += 6;
-                        }
+                        int index_offset = instruction_index + 1;
+                        int16_t address_displacement = GetWordValue(ch, index_offset); 
+                        PrintAddressCalculation(ch, instruction_index , bottom_three_bits_mask,
+                                                address_displacement);
+
+                        bytes_before_value = index_offset + 2; 
+                        bytes_before_next_instruction = 5;
+                        CalculateImmediateMemoryValue(ch, instruction_index, &index_counter, w_mask,
+                                                      bytes_before_value, bytes_before_next_instruction);
                     } break; 
                 }
             } break ;
@@ -253,9 +263,9 @@ int main()
                     case reg_mode:
                     {
                         reg = SetRegister(ch, instruction_index, bottom_three_bits_mask, 
-                                          w_mask, registers, isImmediateReg, true);
+                                          w_mask, registers, mov_type, true);
                         char *reg_two = SetRegister(ch, instruction_index, bottom_three_bits_mask, 
-                                                    w_mask, registers, isImmediateReg, false);
+                                                    w_mask, registers, mov_type, false);
                         if(ch[instruction_index] & d_mask)
                         {
                             PrintRegister(reg);
@@ -269,12 +279,12 @@ int main()
                             printf("\n");
                         }
 
-                        instruction_index += 2;
+                        index_counter += 2;
                     } break;
                     case mem_mode:
                     {
                         reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
-                                          w_mask, registers, isImmediateReg, true);
+                                          w_mask, registers, mov_type, true);
 
                         if(ch[instruction_index] & d_mask)
                         {
@@ -288,12 +298,12 @@ int main()
                         }
                         printf("\n");
 
-                        instruction_index += 2;
+                        index_counter += 2;
                     } break;
                     case mem_mode8:
                     {
                         reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
-                                          w_mask, registers, isImmediateReg, true);
+                                          w_mask, registers, mov_type, true);
 
                         if(ch[instruction_index] & d_mask)
                         {
@@ -325,19 +335,20 @@ int main()
                         }
 
                         printf("\n");
-                        instruction_index += 3;
+                        index_counter += 3;
                         
                     } break;
                     case mem_mode16:
                     {
                         reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
-                                          w_mask, registers, isImmediateReg, true);
+                                          w_mask, registers, mov_type, true);
 
                         if(ch[instruction_index] & d_mask)
                         {
                             PrintRegister(reg);
 
-                            int16_t displacement = GetWordDisplacement(ch, instruction_index, isImmediateReg);
+                            int index_offset = instruction_index + 1;
+                            int16_t displacement = GetWordValue(ch, index_offset);
                             if(displacement == 0)
                             {
                                 PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
@@ -349,7 +360,8 @@ int main()
                         }
                         else 
                         {
-                            int16_t displacement = GetWordDisplacement(ch, instruction_index, isImmediateReg);
+                            int index_offset = instruction_index + 1;
+                            int16_t displacement = GetWordValue(ch, index_offset);
                             if(displacement == 0)
                             {
                                 PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
@@ -363,11 +375,11 @@ int main()
                         }
 
                         printf("\n");
-                        instruction_index += 4;
+                        index_counter += 4;
                     } break;
                     default:
                     {
-                        instruction_index += 2;
+                        index_counter += 2;
                     }
                 }
             } break ;
@@ -376,6 +388,8 @@ int main()
                 printf("Something went horribly horribly wrong!");
             }
         }
+
+        instruction_index += index_counter;
     }
 #endif
 
