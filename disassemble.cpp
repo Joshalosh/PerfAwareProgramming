@@ -4,13 +4,15 @@
 #define MAX_BUFFER_SIZE 256
 #define MAX_REGISTERS 16
 #define REGISTER_CHAR_LENGTH 3
-#define MAX_INSTRUCTIONS 40
+#define MAX_INSTRUCTIONS 39
 
 enum Mov_Type : char
 {
     Mov_RegMov,
     Mov_ImmediateMem,
     Mov_ImmediateReg,
+    Mov_MemToAccumulator,
+    Mov_AcculmulatorToMem,
 };
 
 char *SetRegister(char *ch, int index, char bottom_three_bits_mask, char w_mask, 
@@ -140,6 +142,8 @@ int main()
     char mov_mask               = 0b10001000;
     char mem_immediate_mov_mask = 0b11000110;
     char reg_immediate_mov_mask = 0b10110000;
+    char mem_to_accum_mov_mask  = 0b10100000;
+    char accum_to_mem_mov_mask  = 0b10100010;
     int instruction_index       = 0;
 
     while(instruction_index < MAX_INSTRUCTIONS)
@@ -160,6 +164,16 @@ int main()
         {
             printf("MOV ");
             mov_type = Mov_ImmediateReg; 
+        }
+        else if((ch[instruction_index] >> 1) == (mem_to_accum_mov_mask >> 1))
+        {
+            printf("MOV ");
+            mov_type = Mov_MemToAccumulator;
+        }
+        else if((ch[instruction_index] >> 1) == (accum_to_mem_mov_mask >> 1))
+        {
+            printf("MOV ");
+            mov_type = Mov_AcculmulatorToMem;
         }
         else 
         {
@@ -286,19 +300,35 @@ int main()
                         reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
                                           w_mask, registers, mov_type, true);
 
-                        if(ch[instruction_index] & d_mask)
+                        int8_t direct_addressing_mode = 0b00000110;
+                        bool is_direct_addressing = (ch[instruction_index+1] & bottom_three_bits_mask) ==
+                                                     direct_addressing_mode;
+                        
+                        if(is_direct_addressing)
                         {
                             PrintRegister(reg);
-                            PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
+                            int index_offset = instruction_index + 1;
+                            int16_t value = GetWordValue(ch, index_offset);
+                            printf("[%d]\n", value);
+                            
+                            index_counter += 4;
                         }
                         else 
                         {
-                            PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
-                            PrintRegister(reg);
-                        }
-                        printf("\n");
+                            if(ch[instruction_index] & d_mask)
+                            {
+                                PrintRegister(reg);
+                                PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
+                            }
+                            else 
+                            {
+                                PrintAddressCalculation(ch, instruction_index, bottom_three_bits_mask);
+                                PrintRegister(reg);
+                            }
 
-                        index_counter += 2;
+                            printf("\n");
+                            index_counter += 2;
+                        }
                     } break;
                     case mem_mode8:
                     {
@@ -383,6 +413,28 @@ int main()
                     }
                 }
             } break ;
+            case Mov_MemToAccumulator:
+            {
+                reg = &registers[8][0];
+
+                PrintRegister(reg);
+                int16_t value = GetWordValue(ch, instruction_index);
+
+                printf("[%d] ", value);
+                printf("\n");
+                index_counter += 3;
+            } break;
+            case Mov_AcculmulatorToMem:
+            {
+                reg = &registers[8][0];
+
+                int16_t value = GetWordValue(ch, instruction_index);
+                printf("[%d] ", value);
+
+                PrintRegister(reg);
+                printf("\n");
+                index_counter += 3;
+            } break;
             default:
             {
                 printf("Something went horribly horribly wrong!");
