@@ -4,7 +4,6 @@
 #define MAX_BUFFER_SIZE 256
 #define MAX_REGISTERS 16
 #define REGISTER_CHAR_LENGTH 3
-#define MAX_INSTRUCTIONS 39
 
 enum Mov_Type : char
 {
@@ -80,16 +79,28 @@ void PrintAddressCalculation(char *ch, int instruction_index, char bottom_three_
 void PrintAddressCalculation(char *ch, int instruction_index, char bottom_three_bits_mask, int16_t displacement)
 {
     uint8_t addressing_mode = ch[instruction_index+1] & bottom_three_bits_mask;
+
+    char sign; 
+
+    if((displacement >> 15) == 0)
+    {
+        sign = '+';
+    }
+    else 
+    {
+        sign = '-';
+        displacement *= -1;
+    }
     switch(addressing_mode)
     {
-        case 0b000: printf("[BX + SI + %d] ", displacement); break;
-        case 0b001: printf("[BX + DI + %d] ", displacement); break;
-        case 0b010: printf("[BP + SI + %d] ", displacement); break;
-        case 0b011: printf("[BP + DI + %d] ", displacement); break;
-        case 0b100: printf("[SI + %d] ", displacement);      break;
-        case 0b101: printf("[DI + %d] ", displacement);      break;
-        case 0b110: printf("[BP + %d] ", displacement);      break;
-        case 0b111: printf("[BX + %d] ", displacement);      break;
+        case 0b000: printf("[BX + SI %c %d] ", sign, displacement); break;
+        case 0b001: printf("[BX + DI %c %d] ", sign, displacement); break;
+        case 0b010: printf("[BP + SI %c %d] ", sign, displacement); break;
+        case 0b011: printf("[BP + DI %c %d] ", sign, displacement); break;
+        case 0b100: printf("[SI %c %d] ", sign, displacement);      break;
+        case 0b101: printf("[DI %c %d] ", sign, displacement);      break;
+        case 0b110: printf("[BP %c %d] ", sign, displacement);      break;
+        case 0b111: printf("[BX %c %d] ", sign, displacement);      break;
     }
 }
 
@@ -116,6 +127,7 @@ int main()
 {
     FILE *file;
     char ch[MAX_BUFFER_SIZE] = {};
+    int file_size = 0;
 
 #if 0
     file = fopen("more_movs", "rb");
@@ -130,6 +142,9 @@ int main()
     if(file != NULL)
     {
         fread(ch, sizeof(ch),1,file);
+
+        fseek(file, 0, SEEK_END);
+        file_size = ftell(file);
 
         fclose(file);
     }
@@ -146,7 +161,7 @@ int main()
     char accum_to_mem_mov_mask  = 0b10100010;
     int instruction_index       = 0;
 
-    while(instruction_index < MAX_INSTRUCTIONS)
+    while(instruction_index < file_size)
     {
         int index_counter = 0;
         Mov_Type mov_type;
