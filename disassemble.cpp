@@ -11,15 +11,17 @@ enum Mov_Type : char
     Mov_ImmediateMem,
     Mov_ImmediateReg,
     Mov_MemToAccumulator,
-    Mov_AcculmulatorToMem,
+    Mov_AccumulatorToMem,
 };
 
-char *SetRegister(char *ch, int index, char bottom_three_bits_mask, char w_mask, 
-                  char registers[MAX_REGISTERS][REGISTER_CHAR_LENGTH],
+char *SetRegister(char *ch, int index, char registers[MAX_REGISTERS][REGISTER_CHAR_LENGTH],
                   Mov_Type mov_type, bool is_register_one)
 {
     char *result;
     char temp;
+    char w_mask = mov_type == Mov_ImmediateReg ? 8 : 1;
+    char bottom_three_bits_mask = 7;
+
     if(mov_type == Mov_ImmediateReg)
     {
         temp = ch[index] & bottom_three_bits_mask;
@@ -35,10 +37,12 @@ char *SetRegister(char *ch, int index, char bottom_three_bits_mask, char w_mask,
             if(ch[index] & w_mask)
             {
                 result = &registers[reg_index+8][0];
+                break;
             }
             else 
             {
                 result = &registers[reg_index][0];
+                break;
             }
         }
     }
@@ -133,8 +137,12 @@ int main()
     file = fopen("more_movs", "rb");
 #endif
 
-#if 1
+#if 0
     file = fopen("challenge", "rb");
+#endif
+
+#if 1
+    file = fopen("add_sub_cmp", "rb");
 #endif
 
     printf("The assembly instructions of this file is: \n");
@@ -154,11 +162,17 @@ int main()
     }
 
 #if 1
+    // These are the MOV masks
     char mov_mask               = 0b10001000;
     char mem_immediate_mov_mask = 0b11000110;
     char reg_immediate_mov_mask = 0b10110000;
     char mem_to_accum_mov_mask  = 0b10100000;
     char accum_to_mem_mov_mask  = 0b10100010;
+
+    // These are the Add masks
+
+    char mem_immediate_add_mask = 0b10000000;
+    char reg_immediate_add_mask = 0b00010100;
     int instruction_index       = 0;
 
     while(instruction_index < file_size)
@@ -188,7 +202,17 @@ int main()
         else if((ch[instruction_index] >> 1) == (accum_to_mem_mov_mask >> 1))
         {
             printf("MOV ");
-            mov_type = Mov_AcculmulatorToMem;
+            mov_type = Mov_AccumulatorToMem;
+        }
+        else if((ch[instruction_index] >> 2) == 0)
+        {
+            printf("ADD ");
+            mov_type = Mov_RegMov;
+        }
+        else if((ch[instruction_index] >> 2) == (mem_immediate_add_mask >> 2))
+        {
+            printf("ADD ");
+            mov_type = Mov_ImmediateMem;
         }
         else 
         {
@@ -222,8 +246,7 @@ int main()
         {
             case Mov_ImmediateReg:
             {
-                reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
-                                  w_mask, registers, mov_type, false);
+                reg = SetRegister(ch, instruction_index, registers, mov_type, false);
 
                 PrintRegister(reg);
 
@@ -247,8 +270,13 @@ int main()
                 {
                     case reg_mode:
                     {
-                        printf("This should never get hit");
-                        index_counter += 2;
+                        reg = SetRegister(ch, instruction_index, registers, mov_type, false);
+
+                        PrintRegister(reg);
+
+                        printf("%d\n", ch[instruction_index+2]);
+
+                        index_counter += 3;
                     } break;
                     case mem_mode:
                     {
@@ -291,10 +319,8 @@ int main()
                 {
                     case reg_mode:
                     {
-                        reg = SetRegister(ch, instruction_index, bottom_three_bits_mask, 
-                                          w_mask, registers, mov_type, true);
-                        char *reg_two = SetRegister(ch, instruction_index, bottom_three_bits_mask, 
-                                                    w_mask, registers, mov_type, false);
+                        reg = SetRegister(ch, instruction_index, registers, mov_type, true);
+                        char *reg_two = SetRegister(ch, instruction_index, registers, mov_type, false);
                         if(ch[instruction_index] & d_mask)
                         {
                             PrintRegister(reg);
@@ -312,8 +338,7 @@ int main()
                     } break;
                     case mem_mode:
                     {
-                        reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
-                                          w_mask, registers, mov_type, true);
+                        reg = SetRegister(ch, instruction_index, registers, mov_type, true);
 
                         int8_t direct_addressing_mode = 0b00000110;
                         bool is_direct_addressing = (ch[instruction_index+1] & bottom_three_bits_mask) ==
@@ -347,8 +372,7 @@ int main()
                     } break;
                     case mem_mode8:
                     {
-                        reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
-                                          w_mask, registers, mov_type, true);
+                        reg = SetRegister(ch, instruction_index, registers, mov_type, true);
 
                         if(ch[instruction_index] & d_mask)
                         {
@@ -385,8 +409,7 @@ int main()
                     } break;
                     case mem_mode16:
                     {
-                        reg = SetRegister(ch, instruction_index, bottom_three_bits_mask,
-                                          w_mask, registers, mov_type, true);
+                        reg = SetRegister(ch, instruction_index, registers, mov_type, true);
 
                         if(ch[instruction_index] & d_mask)
                         {
@@ -439,7 +462,7 @@ int main()
                 printf("\n");
                 index_counter += 3;
             } break;
-            case Mov_AcculmulatorToMem:
+            case Mov_AccumulatorToMem:
             {
                 reg = &registers[8][0];
 
