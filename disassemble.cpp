@@ -5,6 +5,102 @@
 #define MAX_REGISTERS 16
 #define REGISTER_CHAR_LENGTH 3
 
+#define ARRAY_COUNT(array) (sizeof(array) / ((array)[0]))
+
+typedef uint8_t  u8;
+typedef uint16_t u16;
+
+typedef int8_t  s8;
+typedef int16_t s16;
+
+struct Instruction_Info {
+    u8   opcode;
+    u8   mod;
+    s16  source;
+    s16  dest; 
+    s16  displacment;
+    s16  data;
+
+    u8 instruction_length;
+};
+
+struct Instruction {
+    u8 op_mask;
+    u8 op_bits;
+};
+
+enum Instruction_Type : u8 {
+    InstructionType_MovRegOrMem,
+    InstructionType_MovImmediateRegOrMem,
+    InstructionType_MovImmediateReg,
+    InstructionType_MovMemToAccum,
+    InstructionType_MovAccumToMem,
+    InstructionType_MovRegOrMemToSegmentReg,
+    InstructionType_MovSegmentRegToRegOrMem,
+
+    InstructionType_Count,
+};
+
+Instruction instruction_table[InstructionType_Count] = {
+    [InstructionType_MovRegOrMem]             = {.op_mask = 0b1111'1100, .op_bits = 0b1000'1000},
+    [InstructionType_MovImmediateRegOrMem]    = {.op_mask = 0b1111'1110, .op_bits = 0b1100'0110},
+    [InstructionType_MovImmediateReg]         = {.op_mask = 0b1111'0000, .op_bits = 0b1011'0000},
+    [InstructionType_MovMemToAccum]           = {.op_mask = 0b1111'1110, .op_bits = 0b1010'0000},
+    [InstructionType_MovAccumToMem]           = {.op_mask = 0b1111'1110, .op_bits = 0b1010'0010},
+    [InstructionType_MovRegOrMemToSegmentReg] = {.op_mask = 0b1111'1111, .op_bits = 0b1000'1110},
+    [InstructionType_MovSegmentRegToRegOrMem] = {.op_mask = 0b1111'1111, .op_bits = 0b1000'1100},
+};
+
+int main() {
+    FILE *file;
+    char ch[MAX_BUFFER_SIZE] = {};
+    int file_size = 0;
+
+#if 1
+    file = fopen("single_register", "rb");
+#endif
+
+#if 0
+    file = fopen("challenge", "rb");
+#endif
+
+#if 0
+    file = fopen("add_sub_cmp", "rb");
+#endif
+
+    printf("The assembly instructions of this file is: \n");
+
+    if(file != NULL)
+    {
+        fread(ch, sizeof(ch),1,file);
+
+        fseek(file, 0, SEEK_END);
+        file_size = ftell(file);
+
+        fclose(file);
+    }
+    else
+    {
+        printf("The file can't be opened \n");
+    }
+
+    int instruction_index = 0
+    while(instruction_index < file_size) {
+
+        Instruction_Type instruction_type;
+        for(int index = 0; index < ARRAY_COUNT(instruction_table); index++) {
+            if((ch[instruction_index] & instruction_table[index].op_mask) == instruction_table[index].op_bits) {
+                instruction_type = index;
+                printf("%d\n", instruction_type);
+                break;
+            }
+        }
+
+        instruction_index += 1;
+    }
+}
+
+#if 0
 enum Mov_Type : char
 {
     Mov_RegMov,
@@ -710,3 +806,4 @@ int main()
 
 #endif
 }
+#endif
