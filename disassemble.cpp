@@ -16,6 +16,8 @@ enum Mov_Type : char
     Add_RegMov,
     Add_ImmediateMem,
     Add_ImmediateAccum,
+
+    Jmp,
 };
 
 char *SetRegister(char *ch, int index, char registers[MAX_REGISTERS][REGISTER_CHAR_LENGTH],
@@ -198,6 +200,28 @@ int main()
     char reg_cmp_mask = 0b00111000;
     char immediate_with_accum = 0b00111100;
 
+    // These are the JUMP masks
+    char Je_Jz   = 0b01110100;
+    char Jl_Jnge = 0b01111100;
+    char Jle_Jng = 0b01111110;
+    char Jb_Jnae = 0b01110010;
+    char Jbe_Jna = 0b01110110; 
+    char Jp_Jpe  = 0b01111010;
+    char Jo      = 0b01110000;
+    char Js      = 0b01111000;
+    char Jne_Jnz = 0b01110101;
+    char Jnl_Jge = 0b01111101;
+    char Jnle_Jg = 0b01111111; 
+    char Jnb_Jae = 0b01110011; 
+    char Jnbe_Ja = 0b01110111;
+    char Jnp_Jpo = 0b01111011;
+    char Jno     = 0b01110001;
+    char Jns     = 0b01111001;
+    char Loop    = 0b11100010;
+    char Loopz   = 0b11100001;
+    char Loopnz  = 0b11100000;
+    char Jcxz    = 0b11100011;
+
     int instruction_index       = 0;
 
     char bottom_three_bits_mask = 7;
@@ -282,6 +306,106 @@ int main()
             printf("CMP ");
             mov_type = Add_ImmediateAccum;
         }
+        else if(ch[instruction_index] == Je_Jz)
+        {
+            printf("JE ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jl_Jnge)
+        {
+            printf("JL ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jle_Jng)
+        {
+            printf("JLE ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jb_Jnae)
+        {
+            printf("JB ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jbe_Jna)
+        {
+            printf("JBE ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jp_Jpe)
+        {
+            printf("JP ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jo)
+        {
+            printf("JO ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Js)
+        {
+            printf("JS ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jne_Jnz)
+        {
+            printf("JNE ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jnl_Jge)
+        {
+            printf("JNL ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jnle_Jg)
+        {
+            printf("JNLE ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jnb_Jae)
+        {
+            printf("JNB ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jnbe_Ja)
+        {
+            printf("JNBE ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jnp_Jpo)
+        {
+            printf("JNP ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jno)
+        {
+            printf("JNO ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jns)
+        {
+            printf("JNS ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Loop)
+        {
+            printf("LOOP ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Loopz)
+        {
+            printf("LOOPZ ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Loopnz)
+        {
+            printf("LOOPNZ ");
+            mov_type = Jmp;
+        }
+        else if(ch[instruction_index] == Jcxz)
+        {
+            printf("JCXZ ");
+            mov_type = Jmp;
+        }
         else 
         {
             printf("Something went horribly wrong!");
@@ -308,11 +432,6 @@ int main()
 
         int bytes_before_value;
         int bytes_before_next_instruction;
-
-        if(instruction_index == 178)
-        {
-            int x = 0;
-        }
 
         if(mov_type == Mov_ImmediateReg || mov_type == Add_ImmediateAccum)
         {
@@ -576,6 +695,11 @@ int main()
             printf("\n");
             index_counter += 3;
         }
+        else if(mov_type == Jmp)
+        {
+            printf("%d\n", ch[instruction_index+1]);
+            index_counter += 2;
+        }
         else
         {
             printf("Something went horribly horribly wrong!");
@@ -584,52 +708,5 @@ int main()
         instruction_index += index_counter;
     }
 
-#endif
-
-
-#if 0
-    for(int index = 0; index < MAX_BUFFER_SIZE; index++)
-    {
-        unsigned char bit_index = 0b10000000;
-        //unsigned int instruction_mask = 
-        while(bit_index > 0)
-        {
-            if(bit_index > 128)
-            {
-            }
-            else if((ch[index] & bit_index) == 0)
-            {
-                printf("0");
-            }
-            else 
-            {
-                printf("1");
-            }
-
-
-            bit_index = bit_index >> 1;
-        } 
-        printf(" ");
-    }
-#endif
-
-#if 0
-    for(int i = 0; i < MAX_BUFFER_SIZE; i++)
-    {
-        unsigned char bit_mask = 0b10000000;
-        for(int j = 0; j < 8; j++)
-        {
-            if(((bit_mask >> j) & ch[i]) == 0)
-            {
-                printf("0");
-            }
-            else 
-            {
-                printf("1");
-                
-            }
-        }
-        printf(" ");
-    }
 #endif
 }
