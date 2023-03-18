@@ -14,17 +14,14 @@ typedef int8_t  s8;
 typedef int16_t s16;
 
 struct Instruction_Info {
-    u8  opcode;
-    u8  d_bit;
-    u8  w_bit;
-    u8  s_bit;
-    u8  mod;
-    s16 source;
-    s16 dest; 
-    s16 displacment;
-    s16 data;
-
-    u8 instruction_length;
+    u8 opcode;
+    u8 d_bit;
+    u8 w_bit;
+    u8 s_bit;
+    u8 mod;
+    u8 reg;
+    u8 rm; 
+    u8 mid_bits;
 };
 
 enum Instruction_Type : u8 {
@@ -45,24 +42,35 @@ struct Instruction {
     u8 d_mask;
     u8 w_mask;
     u8 mod_mask;
+    u8 reg_mask;
     u8 mid_bits_mask;
     u8 mid_bits;
-    u8 bottom_bits_mask;
+    u8 rm_mask;
+    bool reg_on_first_byte;
 };
 
 Instruction instruction_table[InstructionType_Count] = {
-    {0b1111'1100, 0b1000'1000, 2, 1, 0b11'000'000, 0b00'111'000, 0, 0b00'000'111},
-    {0b1111'1110, 0b1100'0110, 0, 1, 0b11'000'000, 0b00'000'000, 0, 0b00'000'111},
-    {0b1111'0000, 0b1011'0000},
-                                                        {0b1111'1110, 0b1010'0000},
-                                                        {0b1111'1110, 0b1010'0010},
-                                                        {0b1111'1111, 0b1000'1110},
-                                                        {0b1111'1111, 0b1000'1100}};
+    {0b1111'1100, 0b1000'1000, 2, 1, 0b11'000'000, 0b00'111'000, NULL, NULL, 0b00'000'111, false},
+    {0b1111'1110, 0b1100'0110, NULL, 1, 0b11'000'000, 0, 0b00'000'000, 0, 0b00'000'111, false},
+    {0b1111'0000, 0b1011'0000, NULL, 0b0000'1000, NULL, 0b0000'0111, NULL, NULL, NULL, true},
+    {0b1111'1110, 0b1010'0000, NULL, 1, NULL, NULL, NULL, NULL, NULL, false},
+    {0b1111'1110, 0b1010'0010, NULL, 1, NULL, NULL, NULL, NULL, NULL, false},
+    {0b1111'1111, 0b1000'1110, NULL, NULL, 0b11'000'000, NULL, NULL, NULL, 0b00'000'111, false},
+    {0b1111'1111, 0b1000'1100, NULL, NULL, 0b11'000'000, NULL, NULL, NULL, 0b00'000'111, false}};
 
 void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index,
                          Instruction *instruction_table, Instruction_Type instruction_type)
 {
-    info->opcode = ch[instruction_index] & instruction_table[instruction_table_index].op_mask
+    info->opcode   = ch[instruction_index] & instruction_table[instruction_index].op_mask;
+    info->d_bit    = ch[instruction_index] & instruction_table[instruction_index].d_mask;
+    info->w_bit    = ch[instruction_index] & instruction_table[instruction_index].w_mask;
+    info->mod      = ch[instruction_index+1] & instruction_table[instruction_index].mod_mask;
+    info->rm       = ch[instruction_index+1] & instruction_table[instruction_index].rm_mask;
+    info->mid_bits = ch[instruction_index+1] & instruction_table[instruction_index].mid_bits; 
+
+    info->reg = (instruction_table[instruction_index].reg_on_first_byte) ? 
+        ch[instruction_index] & instruction_table[instruction_index].reg_mask :
+        ch[instruction_index+1] & instruction_table[instruction_index].reg_mask;
 }
 
 
@@ -114,7 +122,6 @@ int main() {
         for(int index = 0; index < InstructionType_Count; index++) {
             if((ch[instruction_index] & instruction_table[index].op_mask) == instruction_table[index].op_bits) {
                 instruction_type = (Instruction_Type)index;
-                printf("%d\n", instruction_type);
 
                 break;
             }
