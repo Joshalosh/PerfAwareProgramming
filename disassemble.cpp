@@ -14,19 +14,17 @@ typedef int8_t  s8;
 typedef int16_t s16;
 
 struct Instruction_Info {
-    u8   opcode;
-    u8   mod;
-    s16  source;
-    s16  dest; 
-    s16  displacment;
-    s16  data;
+    u8  opcode;
+    u8  d_bit;
+    u8  w_bit;
+    u8  s_bit;
+    u8  mod;
+    s16 source;
+    s16 dest; 
+    s16 displacment;
+    s16 data;
 
     u8 instruction_length;
-};
-
-struct Instruction {
-    u8 op_mask;
-    u8 op_bits;
 };
 
 enum Instruction_Type : u8 {
@@ -41,23 +39,48 @@ enum Instruction_Type : u8 {
     InstructionType_Count,
 };
 
-Instruction instruction_table[InstructionType_Count] = {
-    [InstructionType_MovRegOrMem]             = {.op_mask = 0b1111'1100, .op_bits = 0b1000'1000},
-    [InstructionType_MovImmediateRegOrMem]    = {.op_mask = 0b1111'1110, .op_bits = 0b1100'0110},
-    [InstructionType_MovImmediateReg]         = {.op_mask = 0b1111'0000, .op_bits = 0b1011'0000},
-    [InstructionType_MovMemToAccum]           = {.op_mask = 0b1111'1110, .op_bits = 0b1010'0000},
-    [InstructionType_MovAccumToMem]           = {.op_mask = 0b1111'1110, .op_bits = 0b1010'0010},
-    [InstructionType_MovRegOrMemToSegmentReg] = {.op_mask = 0b1111'1111, .op_bits = 0b1000'1110},
-    [InstructionType_MovSegmentRegToRegOrMem] = {.op_mask = 0b1111'1111, .op_bits = 0b1000'1100},
+struct Instruction {
+    u8 op_mask;
+    u8 op_bits;
+    u8 d_mask;
+    u8 w_mask;
+    u8 mod_mask;
+    u8 mid_bits_mask;
+    u8 mid_bits;
+    u8 bottom_bits_mask;
 };
+
+Instruction instruction_table[InstructionType_Count] = {
+    {0b1111'1100, 0b1000'1000, 2, 1, 0b11'000'000, 0b00'111'000, 0, 0b00'000'111},
+    {0b1111'1110, 0b1100'0110, 0, 1, 0b11'000'000, 0b00'000'000, 0, 0b00'000'111},
+    {0b1111'0000, 0b1011'0000},
+                                                        {0b1111'1110, 0b1010'0000},
+                                                        {0b1111'1110, 0b1010'0010},
+                                                        {0b1111'1111, 0b1000'1110},
+                                                        {0b1111'1111, 0b1000'1100}};
+
+void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index,
+                         Instruction *instruction_table, Instruction_Type instruction_type)
+{
+    info->opcode = ch[instruction_index] & instruction_table[instruction_table_index].op_mask
+}
+
 
 int main() {
     FILE *file;
     char ch[MAX_BUFFER_SIZE] = {};
     int file_size = 0;
 
-#if 1
+#if 0
     file = fopen("single_register", "rb");
+#endif
+
+#if 0
+    file = fopen("multi_register", "rb");
+#endif
+
+#if 1
+    file = fopen("more_movs", "rb");
 #endif
 
 #if 0
@@ -84,17 +107,22 @@ int main() {
         printf("The file can't be opened \n");
     }
 
-    int instruction_index = 0
+    int instruction_index = 0;
     while(instruction_index < file_size) {
 
         Instruction_Type instruction_type;
-        for(int index = 0; index < ARRAY_COUNT(instruction_table); index++) {
+        for(int index = 0; index < InstructionType_Count; index++) {
             if((ch[instruction_index] & instruction_table[index].op_mask) == instruction_table[index].op_bits) {
-                instruction_type = index;
+                instruction_type = (Instruction_Type)index;
                 printf("%d\n", instruction_type);
+
                 break;
             }
         }
+
+        Instruction_Info instruction_info = {};
+
+        InitInstructionInfo(&instruction_info, ch, instruction_index, instruction_table, instruction_type);
 
         instruction_index += 1;
     }
