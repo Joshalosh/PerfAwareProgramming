@@ -74,6 +74,18 @@ void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index
         ch[instruction_index+1] & instruction_table[instruction_index].reg_mask;
 }
 
+void PrintInstructionType(Instruction_Type instruction_type)
+{
+    if(instruction_type < 7) {
+        printf("mov ");
+    } else {
+        printf("I've done a terrible thing!");
+    }
+}
+
+char *registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"}, 
+                         {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"}};
+
 
 int main() {
     FILE *file;
@@ -117,26 +129,41 @@ int main() {
     }
 
     int instruction_index = 0;
-    while(instruction_index < file_size) {
+    while (instruction_index < file_size) {
 
-        Instruction_Type instruction_type;
-        for(int index = 0; index < InstructionType_Count; index++) {
-            if((ch[instruction_index] & instruction_table[index].op_mask) == instruction_table[index].op_bits) {
+        Instruction_Type instruction_type = InstructionType_Count;
+        for (int index = 0; index < InstructionType_Count; index++) {
+            if ((ch[instruction_index] & instruction_table[index].op_mask) == instruction_table[index].op_bits) {
                 instruction_type = (Instruction_Type)index;
 
                 break;
             }
         }
 
-        Instruction_Info instruction_info = {};
-
-        InitInstructionInfo(&instruction_info, ch, instruction_index, instruction_table, instruction_type);
+        if (instruction_type != InstructionType_Count) {
+            Instruction_Info instruction_info = {};
+            InitInstructionInfo(&instruction_info, ch, instruction_index, instruction_table, instruction_type);
+            PrintInstructionType(instruction_type);
+        }
 
         instruction_index += 1;
     }
+
+    printf("\n");
 }
 
 #if 0
+for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 8; j++) {
+        for (int k = 0; k < 2; k++) {
+
+            printf("%c", registers[i][j][k]);
+        }
+        printf(" ");
+    }
+    printf("\n");
+}
+
 enum Mov_Type : char
 {
     Mov_RegMov,
