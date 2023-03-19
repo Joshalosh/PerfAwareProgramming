@@ -22,6 +22,8 @@ struct Instruction_Info {
     u8 reg;
     u8 rm; 
     u8 mid_bits;
+
+    char *op_name;
 };
 
 enum Instruction_Type : u8 {
@@ -70,19 +72,20 @@ void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index
     info->mod      = ch[instruction_index+1] & instruction_table[instruction_index].mod_mask;
     info->rm       = ch[instruction_index+1] & instruction_table[instruction_index].rm_mask;
     info->mid_bits = ch[instruction_index+1] & instruction_table[instruction_index].mid_bits; 
+    info->op_name = instruction_table[instruction_index].op_name;
 
     info->reg = (instruction_table[instruction_index].reg_on_first_byte) ? 
         ch[instruction_index] & instruction_table[instruction_index].reg_mask :
         ch[instruction_index+1] & instruction_table[instruction_index].reg_mask;
 }
 
-void PrintInstructionType(Instruction_Type instruction_type)
+void PrintInstructionType(Instruction_Info instruction_info)
 {
-    if(instruction_type < 7) {
-        printf("mov ");
-    } else {
-        printf("I've done a terrible thing!");
+    for(int i = 0; i < 3; i++) {
+        printf("%c", instruction_info.op_name[i]);
     }
+    
+    printf("\n");
 }
 
 char *registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"}, 
@@ -145,7 +148,7 @@ int main() {
         if (instruction_type != InstructionType_Count) {
             Instruction_Info instruction_info = {};
             InitInstructionInfo(&instruction_info, ch, instruction_index, instruction_table, instruction_type);
-            PrintInstructionType(instruction_type);
+            PrintInstructionType(instruction_info);
         }
 
         instruction_index += 1;
