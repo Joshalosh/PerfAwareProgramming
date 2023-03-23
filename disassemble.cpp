@@ -67,25 +67,92 @@ Mod_Type CheckMod(Instruction_Info instruction_info)
     return result;
 }
 
-void DecodeInstrucion(Instrucion_Info instruction_info, Mod_Type mod_type)
+void PrintRegister(Instruction_Info instruction_info)
 {
-    if (mod_type == Mod_MemModeNoDisp && instruction_info.rm == 0b110) {
-        // TODO: Still need to implement.
-    } else if (mod_type == Mod_MemModeNoDisp) {
-        // TODO: Still need to implement.
+    // TODO: Implement this.
+}
+
+void PrintRM(Instruction_Info instruction_info)
+{
+    // TODO: Implement this.
+}
+
+int CalculateInstructionLength(Instruction_Info instruction_info)
+{
+    int result = 0;
+    // TODO: Implement this.
+    return result;
+}
+
+s16 CalculateDisplacement(Instruction_Info instruction_info, char *ch)
+{
+    s16 result = 0;
+    // TODO: Implement this.
+    return result;
+}
+
+void DecodeInstrucion(Instrucion_Info instruction_info, Mod_Type mod_type, char *ch, int *next_instruction)
+{
+    if (mod_type == Mod_MemModeNoDisp) {
+        if (instruction_info == 0b110) {
+            // TODO: Still need to implement.
+        } else {
+
+            if (instruction_info.d_bit) {
+                PrintRegister(instruction_info);
+                PrintRM(instruction_info);
+            } else {
+                PrintRM(instruction_info);
+                PrintRegister(instruction_info);
+            }
+
+            next_instruction = CalculateInstructionLength(instruction_info);
+        }
+
     } else if (mod_type == MemModeDisp8) {
-        // TODO: Still need to implement.
+        s16 displacement = CalculateDisplacement(instruction_info, ch);
+        if (instruction_info.d_bit) {
+            PrintRegister(instruction_info);
+            PrintRM(instruction_info, displacement);
+        } else {
+            PrintRM(instruction_info, displacement);
+            PrintRegister(instruction_info);
+        }
+
+        next_instruction = CalculateInstructionLength(instruction_info);
+
     } else if (mod_type == Mod_MemModeDisp16) {
-        // TODO: Still need to implement.
+        s16 displacement = CalculateDisplacement(instruction_info, ch);
+        if (instruction_info.d_bit) {
+            PrintRegister(instruction_info);
+            PrintRM(instruction_info, displacement);
+        } else {
+            PrintRM(instruction_info, displacement);
+            PrintRegister(instruction_info);
+        }
+
+        next_instruction = CalculateInstructionLength(instruction_info);
+
     } else if (mod_type == Mod_RegMode) {
-        // TODO: Still need to implement.
+        if (instruction_info.d_bit) {
+            PrintRegister(instruction_info);
+            PrintRM(instruction_info);
+        } else {
+            PrintRM(instruction_info);
+            PrintRegister(instruction_info);
+        }
+
+        next_instruction = CalculateInstructionLength(instruction_info);
     } else {
-        // TODO: Still need to implement.
+        printf("Something went really very truly bad");
     }
 }
 
-char *registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"}, 
-                         {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"}};
+char *reg_registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"}, 
+                             {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"}};
+
+char *mod_registers[7] = {"bx + si", "bx + di", "bp + si", "bp + di", "si", "di", "bx"};
+
 
 
 int main() {
@@ -141,6 +208,8 @@ int main() {
             }
         }
 
+        int next_instruction = 0;
+
         if (instruction_type != InstructionType_Count) {
             Instruction_Info instruction_info = {};
             InitInstructionInfo(&instruction_info, ch, instruction_index, instruction_table, instruction_type);
@@ -148,7 +217,7 @@ int main() {
 
             if (instruction_info.has_second_instruction_byte) {
                 Mod_Type mod_type = CheckMod(instruction_info);
-                DecodeInstruction(instruction_info, mod_type);
+                DecodeInstruction(instruction_info, mod_type, ch, &next_instruction);
             } else {
                 // Implement things related to immediate instructions here.
             }
