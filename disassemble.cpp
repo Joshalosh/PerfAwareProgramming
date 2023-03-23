@@ -1,67 +1,10 @@
 #include <stdio.h>
 #include <stdint.h>
+#include "disassemble.h"
 
 #define MAX_BUFFER_SIZE 256
 #define MAX_REGISTERS 16
 #define REGISTER_CHAR_LENGTH 3
-
-#define ARRAY_COUNT(array) (sizeof(array) / ((array)[0]))
-
-typedef uint8_t  u8;
-typedef uint16_t u16;
-
-typedef int8_t  s8;
-typedef int16_t s16;
-
-struct Instruction_Info {
-    u8 opcode;
-    u8 d_bit;
-    u8 w_bit;
-    u8 s_bit;
-    u8 mod;
-    u8 reg;
-    u8 rm; 
-    u8 mid_bits;
-
-    char *op_name;
-};
-
-enum Instruction_Type : u8 {
-    InstructionType_MovRegOrMem,
-    InstructionType_MovImmediateRegOrMem,
-    InstructionType_MovImmediateReg,
-    InstructionType_MovMemToAccum,
-    InstructionType_MovAccumToMem,
-    InstructionType_MovRegOrMemToSegmentReg,
-    InstructionType_MovSegmentRegToRegOrMem,
-
-    InstructionType_Count,
-};
-
-struct Instruction {
-    char *op_name;
-    u8 op_mask;
-    u8 op_bits;
-    u8 d_mask;
-    u8 w_mask;
-    u8 mod_mask;
-    u8 reg_mask;
-    u8 mid_bits_mask;
-    u8 mid_bits;
-    u8 rm_mask;
-
-    bool reg_on_first_byte;
-    bool is_immediate;
-};
-
-Instruction instruction_table[InstructionType_Count] = {
-    {"MOV", 0b1111'1100, 0b1000'1000, 2, 1, 0b11'000'000, 0b00'111'000, NULL, NULL, 0b00'000'111, false, false},
-    {"MOV", 0b1111'1110, 0b1100'0110, NULL, 1, 0b11'000'000, 0, 0b00'000'000, 0, 0b00'000'111, false, true},
-    {"MOV", 0b1111'0000, 0b1011'0000, NULL, 0b0000'1000, NULL, 0b0000'0111, NULL, NULL, NULL, true, true},
-    {"MOV", 0b1111'1110, 0b1010'0000, NULL, 1, NULL, NULL, NULL, NULL, NULL, false, false},
-    {"MOV", 0b1111'1110, 0b1010'0010, NULL, 1, NULL, NULL, NULL, NULL, NULL, false, false},
-    {"MOV", 0b1111'1111, 0b1000'1110, NULL, NULL, 0b11'000'000, NULL, NULL, NULL, 0b00'000'111, false, false},
-    {"MOV", 0b1111'1111, 0b1000'1100, NULL, NULL, 0b11'000'000, NULL, NULL, NULL, 0b00'000'111, false, false}};
 
 void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index,
                          Instruction *instruction_table, Instruction_Type instruction_type)
@@ -72,11 +15,13 @@ void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index
     info->mod      = ch[instruction_index+1] & instruction_table[instruction_index].mod_mask;
     info->rm       = ch[instruction_index+1] & instruction_table[instruction_index].rm_mask;
     info->mid_bits = ch[instruction_index+1] & instruction_table[instruction_index].mid_bits; 
-    info->op_name = instruction_table[instruction_index].op_name;
+    info->op_name  = instruction_table[instruction_index].op_name;
 
     info->reg = (instruction_table[instruction_index].reg_on_first_byte) ? 
         ch[instruction_index] & instruction_table[instruction_index].reg_mask :
         ch[instruction_index+1] & instruction_table[instruction_index].reg_mask;
+
+    info->has_second_instruction_byte = instruction_table[instruction_index].has_second_instruction_byte;
 }
 
 void PrintInstructionType(Instruction_Info instruction_info)
@@ -85,7 +30,41 @@ void PrintInstructionType(Instruction_Info instruction_info)
         printf("%c", instruction_info.op_name[i]);
     }
     
-    printf("\n");
+    printf(" ");
+}
+
+Mod_Type CheckMod(Instruction_Info instruction_info)
+{
+    Mod_Type result = Mod_Count;
+    u8 mod_mask = 0b11;
+    u8 mod = instruction_info.mod >> 6; 
+    switch (mod) {
+        case Mod_MemModeNoDisp: {
+            result = Mod_MemModeNoDisp;
+            printf("Mem mode no disp");
+        } break;
+
+        case Mod_MemModeDisp8: {
+            result = Mod_MemModeDisp8;
+            printf("Mem mode disp 8");
+        } break;
+
+        case Mod_MemModeDisp16: {
+            result = Mod_MemModeDisp16;
+            printf("Mem mode disp 16");
+        } break;
+
+        case Mod_RegMode: {
+            result = Mod_RegMode;
+            printf("Reg Mode");
+        } break;
+        default : {
+          printf("Something went real bad");
+        } break;
+    }
+
+    printf(" ");
+    return result;
 }
 
 char *registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"}, 
@@ -149,10 +128,15 @@ int main() {
             Instruction_Info instruction_info = {};
             InitInstructionInfo(&instruction_info, ch, instruction_index, instruction_table, instruction_type);
             PrintInstructionType(instruction_info);
+
+            if (instruction_info.has_second_instruction_byte) {
+                Mod_Type mod_type = CheckMod(instruction_info);
+            }
         }
 
         instruction_index += 1;
     }
+
 
     printf("\n");
 }
