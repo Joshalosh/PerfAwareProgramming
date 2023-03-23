@@ -26,7 +26,7 @@ void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index
 
 void PrintInstructionType(Instruction_Info instruction_info)
 {
-    for(int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         printf("%c", instruction_info.op_name[i]);
     }
     
@@ -65,6 +65,23 @@ Mod_Type CheckMod(Instruction_Info instruction_info)
 
     printf(" ");
     return result;
+}
+
+void DecodeInstrucion(Instrucion_Info instruction_info, Mod_Type mod_type)
+{
+    if (mod_type == Mod_MemModeNoDisp && instruction_info.rm == 0b110) {
+        // TODO: Still need to implement.
+    } else if (mod_type == Mod_MemModeNoDisp) {
+        // TODO: Still need to implement.
+    } else if (mod_type == MemModeDisp8) {
+        // TODO: Still need to implement.
+    } else if (mod_type == Mod_MemModeDisp16) {
+        // TODO: Still need to implement.
+    } else if (mod_type == Mod_RegMode) {
+        // TODO: Still need to implement.
+    } else {
+        // TODO: Still need to implement.
+    }
 }
 
 char *registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"}, 
@@ -131,6 +148,9 @@ int main() {
 
             if (instruction_info.has_second_instruction_byte) {
                 Mod_Type mod_type = CheckMod(instruction_info);
+                DecodeInstruction(instruction_info, mod_type);
+            } else {
+                // Implement things related to immediate instructions here.
             }
         }
 
