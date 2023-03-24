@@ -61,13 +61,13 @@ struct Instruction {
 };
 
 Instruction instruction_table[InstructionType_Count] = {
-    {"MOV", 0b1111'1100, 0b1000'1000, 2, 1, 0b11'000'000, 0b00'111'000, NULL, NULL, 0b00'000'111, false, false, true},
-    {"MOV", 0b1111'1110, 0b1100'0110, NULL, 1, 0b11'000'000, 0, 0b00'000'000, 0, 0b00'000'111, false, true, true},
-    {"MOV", 0b1111'0000, 0b1011'0000, NULL, 0b0000'1000, NULL, 0b0000'0111, NULL, NULL, NULL, true, true, false},
-    {"MOV", 0b1111'1110, 0b1010'0000, NULL, 1, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"MOV", 0b1111'1110, 0b1010'0010, NULL, 1, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"MOV", 0b1111'1111, 0b1000'1110, NULL, NULL, 0b11'000'000, NULL, NULL, NULL, 0b00'000'111, false, false, true},
-    {"MOV", 0b1111'1111, 0b1000'1100, NULL, NULL, 0b11'000'000, NULL, NULL, NULL, 0b00'000'111, false, false, true}};
+    {"mov", 0b1111'1100, 0b1000'1000, 2, 1, 0b11'000'000, 0b00'111'000, NULL, NULL, 0b00'000'111, false, false, true},
+    {"mov", 0b1111'1110, 0b1100'0110, NULL, 1, 0b11'000'000, 0, 0b00'000'000, 0, 0b00'000'111, false, true, true},
+    {"mov", 0b1111'0000, 0b1011'0000, NULL, 0b0000'1000, NULL, 0b0000'0111, NULL, NULL, NULL, true, true, false},
+    {"mov", 0b1111'1110, 0b1010'0000, NULL, 1, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"mov", 0b1111'1110, 0b1010'0010, NULL, 1, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"mov", 0b1111'1111, 0b1000'1110, NULL, NULL, 0b11'000'000, NULL, NULL, NULL, 0b00'000'111, false, false, true},
+    {"mov", 0b1111'1111, 0b1000'1100, NULL, NULL, 0b11'000'000, NULL, NULL, NULL, 0b00'000'111, false, false, true}};
 
 #define GAME_ENTITY_H
 #endif

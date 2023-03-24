@@ -9,19 +9,19 @@
 void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index,
                          Instruction *instruction_table, Instruction_Type instruction_type)
 {
-    info->opcode   = ch[instruction_index] & instruction_table[instruction_index].op_mask;
-    info->d_bit    = ch[instruction_index] & instruction_table[instruction_index].d_mask;
-    info->w_bit    = ch[instruction_index] & instruction_table[instruction_index].w_mask;
-    info->mod      = (ch[instruction_index+1] & instruction_table[instruction_index].mod_mask) >> 6;
-    info->rm       = ch[instruction_index+1] & instruction_table[instruction_index].rm_mask;
-    info->mid_bits = ch[instruction_index+1] & instruction_table[instruction_index].mid_bits; 
-    info->op_name  = instruction_table[instruction_index].op_name;
+    info->opcode   = ch[instruction_index] & instruction_table[instruction_type].op_mask;
+    info->d_bit    = ch[instruction_index] & instruction_table[instruction_type].d_mask;
+    info->w_bit    = ch[instruction_index] & instruction_table[instruction_type].w_mask;
+    info->mod      = (ch[instruction_index+1] & instruction_table[instruction_type].mod_mask) >> 6;
+    info->rm       = ch[instruction_index+1] & instruction_table[instruction_type].rm_mask;
+    info->mid_bits = ch[instruction_index+1] & instruction_table[instruction_type].mid_bits; 
+    info->op_name  = instruction_table[instruction_type].op_name;
 
-    info->reg = (instruction_table[instruction_index].reg_on_first_byte) ? 
-        ch[instruction_index] & instruction_table[instruction_index].reg_mask :
-        (ch[instruction_index+1] & instruction_table[instruction_index].reg_mask) >> 3;
+    info->reg = (instruction_table[instruction_type].reg_on_first_byte) ? 
+        ch[instruction_index] & instruction_table[instruction_type].reg_mask :
+        (ch[instruction_index+1] & instruction_table[instruction_type].reg_mask) >> 3;
 
-    info->has_second_instruction_byte = instruction_table[instruction_index].has_second_instruction_byte;
+    info->has_second_instruction_byte = instruction_table[instruction_type].has_second_instruction_byte;
 }
 
 void PrintInstructionType(Instruction_Info instruction_info)
@@ -45,53 +45,65 @@ Mod_Type CheckMod(Instruction_Info instruction_info)
     switch (instruction_info.mod) {
         case Mod_MemModeNoDisp: {
             result = Mod_MemModeNoDisp;
-            printf("Mem mode no disp");
+//            printf("Mem mode no disp");
         } break;
 
         case Mod_MemModeDisp8: {
             result = Mod_MemModeDisp8;
-            printf("Mem mode disp 8");
+//            printf("Mem mode disp 8");
         } break;
 
         case Mod_MemModeDisp16: {
             result = Mod_MemModeDisp16;
-            printf("Mem mode disp 16");
+//            printf("Mem mode disp 16");
         } break;
 
         case Mod_RegMode: {
             result = Mod_RegMode;
-            printf("Reg Mode");
+//            printf("Reg Mode");
         } break;
         default : {
           printf("Something went real bad");
         } break;
     }
 
-    printf(" ");
     return result;
 }
 
-void PrintRegister(Instruction_Info instruction_info, char *reg_registers[2][8])
+void PrintRegister(Instruction_Info instruction_info, char *registers[2][8])
 {
     for (int index = 0; index < 2; index++) {
-        printf("%c", reg_registers[instruction_info.w_bit][instruction_info.reg][index]);
+        printf("%c", registers[instruction_info.w_bit][instruction_info.reg][index]);
     }
 }
 
-void PrintRM(Instruction_Info instruction_info, char *mod_registers)
+void PrintRM(Instruction_Info instruction_info, char *registers[8])
 {
+    int index = 0;
+    while (registers[instruction_info.rm][index] != 0) {
+        printf("%c", registers[instruction_info.rm][index]);
+        index++;
+    }
+}
+void PrintRM(Instruction_Info instruction_info, char *registers[2][8])
+{
+    int index = 0;
+    while (registers[instruction_info.w_bit][instruction_info.rm][index] != 0) {
+        printf("%c", registers[instruction_info.w_bit][instruction_info.rm][index]);
+        index++;
+    }
+}
+
+
+void PrintRM(Instruction_Info instruction_info, char *mod_registers[8], s16 displacement)
+{
+#if 0
     int index = 0;
     while (mod_registers[instruction_info.rm][index] != 0) {
         printf("%c", mod_registers[instruction_info.rm][index]);
         index++;
     }
-}
-
-int CalculateInstructionLength(Instruction_Info instruction_info)
-{
-    int result = 0;
-    // TODO: Implement this.
-    return result;
+#endif
 }
 
 s16 CalculateDisplacement(Instruction_Info instruction_info, char *ch)
@@ -101,62 +113,82 @@ s16 CalculateDisplacement(Instruction_Info instruction_info, char *ch)
     return result;
 }
 
-void DecodeInstrucion(Instrucion_Info instruction_info, Mod_Type mod_type, char *ch, int *next_instruction)
+void DecodeInstruction(Instruction_Info instruction_info, Mod_Type mod_type, 
+                       char *ch, int *bytes_to_next_instruction)
 {
-    if (mod_type == Mod_MemModeNoDisp) {
-        if (instruction_info == 0b110) {
-            // TODO: Still need to implement.
-        } else {
+    switch (mod_type) { 
 
+        case Mod_MemModeNoDisp: {
+            if (instruction_info.rm == 0b110) {
+                // TODO: Still need to implement.
+            } else {
+
+                if (instruction_info.d_bit) {
+                    PrintRegister(instruction_info, reg_registers);
+                    printf(", [");
+                    PrintRM(instruction_info, mod_registers);
+                    printf("]");
+
+                } else {
+                    printf("[");
+                    PrintRM(instruction_info, mod_registers);
+                    printf("], ");
+                    PrintRegister(instruction_info, reg_registers);
+                }
+
+                *bytes_to_next_instruction = 2;
+            }
+
+        } break;
+
+        case Mod_MemModeDisp8: {
+            s16 displacement = CalculateDisplacement(instruction_info, ch);
+            if (instruction_info.d_bit) {
+                PrintRegister(instruction_info, reg_registers);
+                PrintRM(instruction_info, mod_registers, displacement);
+
+            } else {
+                PrintRM(instruction_info, mod_registers, displacement);
+                PrintRegister(instruction_info, reg_registers);
+            }
+
+            *bytes_to_next_instruction = 1; // TODO: need to make this a legit value.
+
+        } break; 
+
+        case Mod_MemModeDisp16: {
+            s16 displacement = CalculateDisplacement(instruction_info, ch);
+            if (instruction_info.d_bit) {
+                PrintRegister(instruction_info, reg_registers);
+                PrintRM(instruction_info, mod_registers, displacement);
+
+            } else {
+                PrintRM(instruction_info, mod_registers, displacement);
+                PrintRegister(instruction_info, reg_registers);
+            }
+
+            *bytes_to_next_instruction = 1; // TODO: need to make this a legit value.
+
+        } break;
+
+        case Mod_RegMode: {
             if (instruction_info.d_bit) {
                 PrintRegister(instruction_info, reg_registers);
                 printf(", ");
-                PrintRM(instruction_info);
+                PrintRM(instruction_info, reg_registers);
+
             } else {
-                PrintRM(instruction_info);
+                PrintRM(instruction_info, reg_registers);
                 printf(", ");
                 PrintRegister(instruction_info, reg_registers);
             }
 
-            next_instruction = CalculateInstructionLength(instruction_info);
+            *bytes_to_next_instruction = 2;
+        } break;  
+
+        default: {
+            printf("Something went really very truly bad");
         }
-
-    } else if (mod_type == MemModeDisp8) {
-        s16 displacement = CalculateDisplacement(instruction_info, ch);
-        if (instruction_info.d_bit) {
-            PrintRegister(instruction_info, reg_registers);
-            PrintRM(instruction_info, displacement);
-        } else {
-            PrintRM(instruction_info, displacement);
-            PrintRegister(instruction_info, reg_registers);
-        }
-
-        next_instruction = CalculateInstructionLength(instruction_info);
-
-    } else if (mod_type == Mod_MemModeDisp16) {
-        s16 displacement = CalculateDisplacement(instruction_info, ch);
-        if (instruction_info.d_bit) {
-            PrintRegister(instruction_info, reg_registers);
-            PrintRM(instruction_info, displacement);
-        } else {
-            PrintRM(instruction_info, displacement);
-            PrintRegister(instruction_info, reg_registers);
-        }
-
-        next_instruction = CalculateInstructionLength(instruction_info);
-
-    } else if (mod_type == Mod_RegMode) {
-        if (instruction_info.d_bit) {
-            PrintRegister(instruction_info, reg_registers);
-            PrintRM(instruction_info);
-        } else {
-            PrintRM(instruction_info);
-            PrintRegister(instruction_info, reg_registers);
-        }
-
-        next_instruction = CalculateInstructionLength(instruction_info);
-    } else {
-        printf("Something went really very truly bad");
     }
 }
 
@@ -209,12 +241,11 @@ int main() {
         for (int index = 0; index < InstructionType_Count; index++) {
             if ((ch[instruction_index] & instruction_table[index].op_mask) == instruction_table[index].op_bits) {
                 instruction_type = (Instruction_Type)index;
-
                 break;
             }
         }
 
-        int next_instruction = 0;
+        int bytes_to_next_instruction = 0;
 
         if (instruction_type != InstructionType_Count) {
             Instruction_Info instruction_info = {};
@@ -223,13 +254,14 @@ int main() {
 
             if (instruction_info.has_second_instruction_byte) {
                 Mod_Type mod_type = CheckMod(instruction_info);
-                DecodeInstruction(instruction_info, mod_type, ch, &next_instruction);
+                DecodeInstruction(instruction_info, mod_type, ch, &bytes_to_next_instruction);
             } else {
                 // Implement things related to immediate instructions here.
             }
         }
 
-        instruction_index += 1;
+        instruction_index += bytes_to_next_instruction;
+        printf("\n");
     }
 
 
