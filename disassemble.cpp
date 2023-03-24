@@ -36,7 +36,7 @@ void PrintInstructionType(Instruction_Info instruction_info)
 char *reg_registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"}, 
                              {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"}};
 
-char *mod_registers[7] = {"bx + si", "bx + di", "bp + si", "bp + di", "si", "di", "bx"};
+char *mod_registers[8] = {"bx + si", "bx + di", "bp + si", "bp + di", "si", "di", "Shouldn't be picked", "bx"};
 
 
 Mod_Type CheckMod(Instruction_Info instruction_info)
@@ -71,16 +71,20 @@ Mod_Type CheckMod(Instruction_Info instruction_info)
     return result;
 }
 
-void PrintRegister(Instruction_Info instruction_info, char *registers[2][8])
+void PrintRegister(Instruction_Info instruction_info, char *reg_registers[2][8])
 {
     for (int index = 0; index < 2; index++) {
-        printf("%c", registers[instruction_info.w_bit][instruction_info.reg][index]);
+        printf("%c", reg_registers[instruction_info.w_bit][instruction_info.reg][index]);
     }
 }
 
-void PrintRM(Instruction_Info instruction_info)
+void PrintRM(Instruction_Info instruction_info, char *mod_registers)
 {
-    // TODO: Implement this.
+    int index = 0;
+    while (mod_registers[instruction_info.rm][index] != 0) {
+        printf("%c", mod_registers[instruction_info.rm][index]);
+        index++;
+    }
 }
 
 int CalculateInstructionLength(Instruction_Info instruction_info)
