@@ -106,15 +106,16 @@ void PrintRM(Instruction_Info instruction_info, char *mod_registers[8], s16 disp
 #endif
 }
 
-s16 CalculateDisplacement(Instruction_Info instruction_info, char *ch)
+s16 CalculateNumber(char *ch, int instruction_index)
 {
-    s16 result = 0;
-    // TODO: Implement this.
+    s16 result;
+    result = ((ch[instruction_index + 2] & 0xFF) << 8) | (ch[instruction_index + 1] & 0xFF);
+
     return result;
 }
 
 void DecodeInstruction(Instruction_Info instruction_info, Mod_Type mod_type, 
-                       char *ch, int *bytes_to_next_instruction)
+                       char *ch, int instruction_index, int *bytes_to_next_instruction)
 {
     switch (mod_type) { 
 
@@ -142,7 +143,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Mod_Type mod_type,
         } break;
 
         case Mod_MemModeDisp8: {
-            s16 displacement = CalculateDisplacement(instruction_info, ch);
+            s16 displacement = CalculateNumber(ch, instruction_index);
             if (instruction_info.d_bit) {
                 PrintRegister(instruction_info, reg_registers);
                 PrintRM(instruction_info, mod_registers, displacement);
@@ -157,7 +158,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Mod_Type mod_type,
         } break; 
 
         case Mod_MemModeDisp16: {
-            s16 displacement = CalculateDisplacement(instruction_info, ch);
+            s16 displacement = CalculateNumber(ch, instruction_index);
             if (instruction_info.d_bit) {
                 PrintRegister(instruction_info, reg_registers);
                 PrintRM(instruction_info, mod_registers, displacement);
@@ -220,17 +221,15 @@ int main() {
 
     printf("The assembly instructions of this file is: \n");
 
-    if(file != NULL)
-    {
+    if(file != NULL) {
         fread(ch, sizeof(ch),1,file);
 
         fseek(file, 0, SEEK_END);
         file_size = ftell(file);
 
         fclose(file);
-    }
-    else
-    {
+
+    } else {
         printf("The file can't be opened \n");
     }
 
@@ -254,9 +253,25 @@ int main() {
 
             if (instruction_info.has_second_instruction_byte) {
                 Mod_Type mod_type = CheckMod(instruction_info);
-                DecodeInstruction(instruction_info, mod_type, ch, &bytes_to_next_instruction);
+                DecodeInstruction(instruction_info, mod_type, ch, 
+                                  instruction_index, &bytes_to_next_instruction);
             } else {
                 // Implement things related to immediate instructions here.
+                instruction_info.w_bit >>= 3;
+                PrintRegister(instruction_info, reg_registers);
+                printf(", ");
+                s16 data = 0;
+
+                if (instruction_info.w_bit) {
+                    data = CalculateNumber(ch, instruction_index);
+                    bytes_to_next_instruction = 3;
+
+                } else {
+                    data = ch[instruction_index + 1];
+                    bytes_to_next_instruction = 2;
+                }
+
+                printf("%d", data);
             }
         }
 
