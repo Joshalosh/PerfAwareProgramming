@@ -36,7 +36,7 @@ void PrintInstructionType(Instruction_Info instruction_info)
 char *reg_registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"}, 
                              {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"}};
 
-char *mod_registers[8] = {"bx + si", "bx + di", "bp + si", "bp + di", "si", "di", "Shouldn't be picked", "bx"};
+char *mod_registers[8] = {"bx + si", "bx + di", "bp + si", "bp + di", "si", "di", "bp", "bx"};
 
 
 Mod_Type CheckMod(Instruction_Info instruction_info)
@@ -95,21 +95,20 @@ void PrintRM(Instruction_Info instruction_info, char *registers[2][8])
 }
 
 
-void PrintRM(Instruction_Info instruction_info, char *mod_registers[8], s16 displacement)
+void PrintDisplacement(s16 displacement)
 {
-#if 0
-    int index = 0;
-    while (mod_registers[instruction_info.rm][index] != 0) {
-        printf("%c", mod_registers[instruction_info.rm][index]);
-        index++;
+    if (displacement == 0) {
+        // Do nothing.
+
+    } else {
+        printf(" + %d", displacement);
     }
-#endif
 }
 
-s16 CalculateNumber(char *ch, int instruction_index)
+s16 CalculateNumber(char *ch, int instruction_index, int offset)
 {
     s16 result;
-    result = ((ch[instruction_index + 2] & 0xFF) << 8) | (ch[instruction_index + 1] & 0xFF);
+    result = ((ch[instruction_index + offset + 2] & 0xFF) << 8) | (ch[instruction_index + offset + 1] & 0xFF);
 
     return result;
 }
@@ -143,32 +142,46 @@ void DecodeInstruction(Instruction_Info instruction_info, Mod_Type mod_type,
         } break;
 
         case Mod_MemModeDisp8: {
-            s16 displacement = CalculateNumber(ch, instruction_index);
+            int bytes_to_displacement = 2;
+            s16 displacement = ch[instruction_index + bytes_to_displacement];
             if (instruction_info.d_bit) {
                 PrintRegister(instruction_info, reg_registers);
-                PrintRM(instruction_info, mod_registers, displacement);
+                printf(", [");
+                PrintRM(instruction_info, mod_registers);
+                PrintDisplacement(displacement);
+                printf("]");
 
             } else {
-                PrintRM(instruction_info, mod_registers, displacement);
+                printf("[");
+                PrintRM(instruction_info, mod_registers);
+                PrintDisplacement(displacement);
+                printf("], ");
                 PrintRegister(instruction_info, reg_registers);
             }
 
-            *bytes_to_next_instruction = 1; // TODO: need to make this a legit value.
+            *bytes_to_next_instruction = 3;
 
         } break; 
 
         case Mod_MemModeDisp16: {
-            s16 displacement = CalculateNumber(ch, instruction_index);
+            int offset_for_displacement = 1;
+            s16 displacement = CalculateNumber(ch, instruction_index, offset_for_displacement);
             if (instruction_info.d_bit) {
                 PrintRegister(instruction_info, reg_registers);
-                PrintRM(instruction_info, mod_registers, displacement);
+                printf(", [");
+                PrintRM(instruction_info, mod_registers);
+                PrintDisplacement(displacement);
+                printf("]");
 
             } else {
-                PrintRM(instruction_info, mod_registers, displacement);
+                printf("[");
+                PrintRM(instruction_info, mod_registers);
+                PrintDisplacement(displacement);
+                printf("], ");
                 PrintRegister(instruction_info, reg_registers);
             }
 
-            *bytes_to_next_instruction = 1; // TODO: need to make this a legit value.
+            *bytes_to_next_instruction = 4;
 
         } break;
 
@@ -207,11 +220,11 @@ int main() {
     file = fopen("multi_register", "rb");
 #endif
 
-#if 1
+#if 0
     file = fopen("more_movs", "rb");
 #endif
 
-#if 0
+#if 1
     file = fopen("challenge", "rb");
 #endif
 
@@ -263,7 +276,7 @@ int main() {
                 s16 data = 0;
 
                 if (instruction_info.w_bit) {
-                    data = CalculateNumber(ch, instruction_index);
+                    data = CalculateNumber(ch, instruction_index, 0);
                     bytes_to_next_instruction = 3;
 
                 } else {
