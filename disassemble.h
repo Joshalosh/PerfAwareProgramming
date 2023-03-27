@@ -19,6 +19,7 @@ struct Instruction_Info {
     u8 mid_bits;
 
     char *op_name;
+    bool is_immediate;
     bool has_second_instruction_byte;
 };
 

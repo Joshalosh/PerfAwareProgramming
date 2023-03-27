@@ -9,13 +9,14 @@
 void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index,
                          Instruction *instruction_table, Instruction_Type instruction_type)
 {
-    info->opcode   = ch[instruction_index] & instruction_table[instruction_type].op_mask;
-    info->d_bit    = ch[instruction_index] & instruction_table[instruction_type].d_mask;
-    info->w_bit    = ch[instruction_index] & instruction_table[instruction_type].w_mask;
-    info->mod      = (ch[instruction_index+1] & instruction_table[instruction_type].mod_mask) >> 6;
-    info->rm       = ch[instruction_index+1] & instruction_table[instruction_type].rm_mask;
-    info->mid_bits = ch[instruction_index+1] & instruction_table[instruction_type].mid_bits; 
-    info->op_name  = instruction_table[instruction_type].op_name;
+    info->opcode       = ch[instruction_index] & instruction_table[instruction_type].op_mask;
+    info->d_bit        = ch[instruction_index] & instruction_table[instruction_type].d_mask;
+    info->w_bit        = ch[instruction_index] & instruction_table[instruction_type].w_mask;
+    info->mod          = (ch[instruction_index+1] & instruction_table[instruction_type].mod_mask) >> 6;
+    info->rm           = ch[instruction_index+1] & instruction_table[instruction_type].rm_mask;
+    info->mid_bits     = ch[instruction_index+1] & instruction_table[instruction_type].mid_bits; 
+    info->op_name      = instruction_table[instruction_type].op_name;
+    info->is_immediate = instruction_table[instruction_type].is_immediate;
 
     info->reg = (instruction_table[instruction_type].reg_on_first_byte) ? 
         ch[instruction_index] & instruction_table[instruction_type].reg_mask :
@@ -45,22 +46,18 @@ Mod_Type CheckMod(Instruction_Info instruction_info)
     switch (instruction_info.mod) {
         case Mod_MemModeNoDisp: {
             result = Mod_MemModeNoDisp;
-//            printf("Mem mode no disp");
         } break;
 
         case Mod_MemModeDisp8: {
             result = Mod_MemModeDisp8;
-//            printf("Mem mode disp 8");
         } break;
 
         case Mod_MemModeDisp16: {
             result = Mod_MemModeDisp16;
-//            printf("Mem mode disp 16");
         } break;
 
         case Mod_RegMode: {
             result = Mod_RegMode;
-//            printf("Reg Mode");
         } break;
         default : {
           printf("Something went real bad");
@@ -101,7 +98,15 @@ void PrintDisplacement(s16 displacement)
         // Do nothing.
 
     } else {
-        printf(" + %d", displacement);
+        s16 sign_mask = 0b10000000'00000000;
+        s16 negative_check = displacement & sign_mask;
+
+        char sign = (negative_check) ? '-' : '+';
+        if(negative_check) {
+            displacement *= -1;
+        }
+
+        printf(" %c %d", sign, displacement);
     }
 }
 
@@ -113,6 +118,25 @@ s16 CalculateNumber(char *ch, int instruction_index, int offset)
     return result;
 }
 
+void PrintMemModeOperations(Instruction_Info instruction_info, char *reg_registers[2][8], 
+                            char *mod_registers[8], s16 displacement)
+{
+    if (instruction_info.d_bit) {
+        PrintRegister(instruction_info, reg_registers);
+        printf(", [");
+        PrintRM(instruction_info, mod_registers);
+        PrintDisplacement(displacement);
+        printf("]");
+
+    } else {
+        printf("[");
+        PrintRM(instruction_info, mod_registers);
+        PrintDisplacement(displacement);
+        printf("], ");
+        PrintRegister(instruction_info, reg_registers);
+    }
+}
+
 void DecodeInstruction(Instruction_Info instruction_info, Mod_Type mod_type, 
                        char *ch, int instruction_index, int *bytes_to_next_instruction)
 {
@@ -122,67 +146,26 @@ void DecodeInstruction(Instruction_Info instruction_info, Mod_Type mod_type,
             if (instruction_info.rm == 0b110) {
                 // TODO: Still need to implement.
             } else {
-
-                if (instruction_info.d_bit) {
-                    PrintRegister(instruction_info, reg_registers);
-                    printf(", [");
-                    PrintRM(instruction_info, mod_registers);
-                    printf("]");
-
-                } else {
-                    printf("[");
-                    PrintRM(instruction_info, mod_registers);
-                    printf("], ");
-                    PrintRegister(instruction_info, reg_registers);
-                }
+            PrintMemModeOperations(instruction_info, reg_registers, mod_registers, 0);
 
                 *bytes_to_next_instruction = 2;
             }
-
         } break;
 
         case Mod_MemModeDisp8: {
             int bytes_to_displacement = 2;
             s16 displacement = ch[instruction_index + bytes_to_displacement];
-            if (instruction_info.d_bit) {
-                PrintRegister(instruction_info, reg_registers);
-                printf(", [");
-                PrintRM(instruction_info, mod_registers);
-                PrintDisplacement(displacement);
-                printf("]");
-
-            } else {
-                printf("[");
-                PrintRM(instruction_info, mod_registers);
-                PrintDisplacement(displacement);
-                printf("], ");
-                PrintRegister(instruction_info, reg_registers);
-            }
+            PrintMemModeOperations(instruction_info, reg_registers, mod_registers, displacement);
 
             *bytes_to_next_instruction = 3;
-
         } break; 
 
         case Mod_MemModeDisp16: {
             int offset_for_displacement = 1;
             s16 displacement = CalculateNumber(ch, instruction_index, offset_for_displacement);
-            if (instruction_info.d_bit) {
-                PrintRegister(instruction_info, reg_registers);
-                printf(", [");
-                PrintRM(instruction_info, mod_registers);
-                PrintDisplacement(displacement);
-                printf("]");
-
-            } else {
-                printf("[");
-                PrintRM(instruction_info, mod_registers);
-                PrintDisplacement(displacement);
-                printf("], ");
-                PrintRegister(instruction_info, reg_registers);
-            }
+            PrintMemModeOperations(instruction_info, reg_registers, mod_registers, displacement);
 
             *bytes_to_next_instruction = 4;
-
         } break;
 
         case Mod_RegMode: {
@@ -220,11 +203,11 @@ int main() {
     file = fopen("multi_register", "rb");
 #endif
 
-#if 0
+#if 1
     file = fopen("more_movs", "rb");
 #endif
 
-#if 1
+#if 0
     file = fopen("challenge", "rb");
 #endif
 
