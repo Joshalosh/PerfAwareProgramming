@@ -143,8 +143,13 @@ void DecodeInstruction(Instruction_Info instruction_info, Mod_Type mod_type,
     switch (mod_type) { 
 
         case Mod_MemModeNoDisp: {
+            if (instruction_info.is_immediate) {
+                // TODO: Implement this.
+            }
+
             if (instruction_info.rm == 0b110) {
-                // TODO: Still need to implement.
+                // TODO: Still need to implement. I could probably just 
+                // use the same operations that I do for Mod_MemModeDisp16 I think.
             } else {
             PrintMemModeOperations(instruction_info, reg_registers, mod_registers, 0);
 
@@ -203,11 +208,11 @@ int main() {
     file = fopen("multi_register", "rb");
 #endif
 
-#if 1
+#if 0
     file = fopen("more_movs", "rb");
 #endif
 
-#if 0
+#if 1
     file = fopen("challenge", "rb");
 #endif
 
