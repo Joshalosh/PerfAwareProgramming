@@ -92,28 +92,28 @@ void PrintRM(Instruction_Info instruction_info, char *registers[2][8])
 }
 
 
-void PrintDisplacement(s16 displacement)
+void PrintDisplacement(s16 value)
 {
-    if (displacement == 0) {
+    if (value == 0) {
         // Do nothing.
 
     } else {
         s16 sign_mask = 0b10000000'00000000;
-        s16 negative_check = displacement & sign_mask;
+        s16 negative_check = value & sign_mask;
 
         char sign = (negative_check) ? '-' : '+';
         if(negative_check) {
-            displacement *= -1;
+            value *= -1;
         }
 
-        printf(" %c %d", sign, displacement);
+        printf(" %c %d", sign, value);
     }
 }
 
-s16 CalculateNumber(char *ch, int instruction_index, int offset)
+s16 CalculateWord(char *ch, int instruction_index, int offset)
 {
     s16 result;
-    result = ((ch[instruction_index + offset + 2] & 0xFF) << 8) | (ch[instruction_index + offset + 1] & 0xFF);
+    result = ((ch[instruction_index + offset + 1] & 0xFF) << 8) | (ch[instruction_index + offset] & 0xFF);
 
     return result;
 }
@@ -137,21 +137,59 @@ void PrintMemModeOperations(Instruction_Info instruction_info, char *reg_registe
     }
 }
 
+void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch, char *mod_registers[8],
+                                     int instruction_index, s16 bytes_to_displacement, 
+                                     int *bytes_to_next_instruction)
+{
+    printf("[");
+    PrintRM(instruction_info, mod_registers);
+    if (bytes_to_displacement) {
+        s16 displacement = CalculateWord(ch, instruction_index, bytes_to_displacement);
+        PrintDisplacement(displacement);
+    }
+    printf("], ");
+
+    if (instruction_info.w_bit) {
+        printf("word ");
+        int value_offset = bytes_to_displacement + 2;
+        s16 value = CalculateWord(ch, instruction_index, value_offset);
+        printf("%d", value);
+
+        *bytes_to_next_instruction = 4 + bytes_to_displacement;
+
+    } else {
+        printf("byte %d", ch[instruction_index + 2 + bytes_to_displacement]);
+
+        *bytes_to_next_instruction = 3 + bytes_to_displacement;
+    }
+}
+
 void DecodeInstruction(Instruction_Info instruction_info, Mod_Type mod_type, 
                        char *ch, int instruction_index, int *bytes_to_next_instruction)
 {
     switch (mod_type) { 
 
         case Mod_MemModeNoDisp: {
-            if (instruction_info.is_immediate) {
-                // TODO: Implement this.
-            }
-
+            // For some reason there is a funny exeption in this mode where
+            // if the RM bits equal 110 then there is a 16 bit value that goes
+            // directly into the register.
             if (instruction_info.rm == 0b110) {
-                // TODO: Still need to implement. I could probably just 
-                // use the same operations that I do for Mod_MemModeDisp16 I think.
+                int bytes_to_value = 2;
+                s16 value = CalculateWord(ch, instruction_index, bytes_to_value);
+                PrintRegister(instruction_info, reg_registers);
+                printf(", [");
+                printf("%d", value);
+                printf("]");
+
+                *bytes_to_next_instruction = 4;
+
+            } else if (instruction_info.is_immediate) {
+                PrintImmediateMemModeOperations(instruction_info, ch, mod_registers, 
+                                                instruction_index, 0, 
+                                                bytes_to_next_instruction);
+
             } else {
-            PrintMemModeOperations(instruction_info, reg_registers, mod_registers, 0);
+                PrintMemModeOperations(instruction_info, reg_registers, mod_registers, 0);
 
                 *bytes_to_next_instruction = 2;
             }
@@ -166,11 +204,20 @@ void DecodeInstruction(Instruction_Info instruction_info, Mod_Type mod_type,
         } break; 
 
         case Mod_MemModeDisp16: {
-            int offset_for_displacement = 1;
-            s16 displacement = CalculateNumber(ch, instruction_index, offset_for_displacement);
-            PrintMemModeOperations(instruction_info, reg_registers, mod_registers, displacement);
+            int bytes_to_displacement = 2;
 
-            *bytes_to_next_instruction = 4;
+            if (instruction_info.is_immediate) {
+                PrintImmediateMemModeOperations(instruction_info, ch, mod_registers, 
+                                                instruction_index, bytes_to_displacement,
+                                                bytes_to_next_instruction);
+
+            } else {
+
+                s16 displacement = CalculateWord(ch, instruction_index, bytes_to_displacement);
+                PrintMemModeOperations(instruction_info, reg_registers, mod_registers, displacement);
+
+                *bytes_to_next_instruction = 4;
+            }
         } break;
 
         case Mod_RegMode: {
@@ -264,7 +311,8 @@ int main() {
                 s16 data = 0;
 
                 if (instruction_info.w_bit) {
-                    data = CalculateNumber(ch, instruction_index, 0);
+                    int data_offset = 1;
+                    data = CalculateWord(ch, instruction_index, data_offset);
                     bytes_to_next_instruction = 3;
 
                 } else {
