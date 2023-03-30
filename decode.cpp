@@ -263,6 +263,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 printf("%d", data);
             } break;
 
+            case InstructionType_AddImmediateToAccum:
             case InstructionType_MovMemToAccum: 
             {
                 PrintRegister(instruction_info, reg_registers);
@@ -279,7 +280,12 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                     *bytes_to_next_instruction = 2;
                 }
 
-                printf("[%d]", data);
+                if (!instruction_info.is_immediate) {
+                    printf("[%d]", data);
+
+                } else {
+                    printf("%d", data);
+                }
             } break;
 
             case InstructionType_MovAccumToMem:
@@ -294,8 +300,13 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                     data = ch[instruction_index + 1];
                     *bytes_to_next_instruction = 2;
                 }
-                printf("[%d]", data);
-                printf(", ");
+
+                if (!instruction_info.is_immediate) {
+                    printf("[%d], ", data);
+
+                } else {
+                    printf("%d, ", data);
+                }
 
                 PrintRegister(instruction_info, reg_registers);
             }break;

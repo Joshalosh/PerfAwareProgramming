@@ -19,11 +19,11 @@ int main() {
     file = fopen("more_movs", "rb");
 #endif
 
-#if 1
+#if 0
     file = fopen("challenge", "rb");
 #endif
 
-#if 0
+#if 1
     file = fopen("add_sub_cmp", "rb");
 #endif
 
