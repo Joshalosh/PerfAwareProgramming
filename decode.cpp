@@ -9,6 +9,7 @@ void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index
 {
     info->opcode       = ch[instruction_index] & instruction_table[instruction_type].op_mask;
     info->d_bit        = ch[instruction_index] & instruction_table[instruction_type].d_mask;
+    info->s_bit        = ch[instruction_index] & instruction_table[instruction_type].s_mask;
     info->w_bit        = ch[instruction_index] & instruction_table[instruction_type].w_mask;
     info->mod          = (ch[instruction_index+1] & instruction_table[instruction_type].mod_mask) >> 6;
     info->rm           = ch[instruction_index+1] & instruction_table[instruction_type].rm_mask;
@@ -147,7 +148,7 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
     }
     printf("], ");
 
-    if (instruction_info.w_bit) {
+    if (instruction_info.w_bit && !instruction_info.s_bit) {
         printf("word ");
         int value_offset = bytes_to_displacement + 2;
         s16 value = CalculateWord(ch, instruction_index, value_offset);
@@ -159,6 +160,27 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
         printf("byte %d", ch[instruction_index + 2 + bytes_to_displacement]);
 
         *bytes_to_next_instruction = 3 + bytes_to_displacement;
+    }
+}
+
+void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch, char *reg_registers[2][8],
+                                     int instruction_index, int *bytes_to_next_instruction)
+{
+    PrintRM(instruction_info, reg_registers);
+    printf(", ");
+
+    if(instruction_info.w_bit && !instruction_info.s_bit)
+    {
+        int value_offset = 2;
+        s16 value = CalculateWord(ch, instruction_index, value_offset);
+        printf("%d", value);
+
+        *bytes_to_next_instruction = 4;
+
+    } else {
+        printf("%d", ch[instruction_index + 2]);
+
+        *bytes_to_next_instruction = 3;
     }
 }
 
@@ -221,18 +243,26 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
             } break;
 
             case Mod_RegMode: {
-                if (instruction_info.d_bit) {
-                    PrintRegister(instruction_info, reg_registers);
-                    printf(", ");
-                    PrintRM(instruction_info, reg_registers);
+                if (!instruction_info.is_immediate) {
+                    if (instruction_info.d_bit) {
+                        PrintRegister(instruction_info, reg_registers);
+                        printf(", ");
+                        PrintRM(instruction_info, reg_registers);
+
+                    } else {
+                        PrintRM(instruction_info, reg_registers);
+                        printf(", ");
+                        if(!instruction_info.is_immediate) {
+                            PrintRegister(instruction_info, reg_registers);
+                        }
+                    }
+
+                    *bytes_to_next_instruction = 2;
 
                 } else {
-                    PrintRM(instruction_info, reg_registers);
-                    printf(", ");
-                    PrintRegister(instruction_info, reg_registers);
+                    PrintImmediateRegModeOperations(instruction_info, ch, reg_registers,
+                                                    instruction_index, bytes_to_next_instruction);
                 }
-
-                *bytes_to_next_instruction = 2;
             } break;  
 
             default: {
@@ -245,7 +275,9 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
         {
             case InstructionType_MovImmediateReg: 
             {
-                instruction_info.w_bit >>= 3;
+                if (instruction_type == InstructionType_MovImmediateReg) {
+                    instruction_info.w_bit >>= 3;
+                }
                 PrintRegister(instruction_info, reg_registers);
                 printf(", ");
 
@@ -270,6 +302,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 printf(", ");
 
                 s16 data = 0;
+
                 if (instruction_info.w_bit) {
                     int data_offset = 1;
                     data = CalculateWord(ch, instruction_index, data_offset);
