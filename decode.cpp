@@ -13,7 +13,7 @@ void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index
     info->w_bit        = ch[instruction_index] & instruction_table[instruction_type].w_mask;
     info->mod          = (ch[instruction_index+1] & instruction_table[instruction_type].mod_mask) >> 6;
     info->rm           = ch[instruction_index+1] & instruction_table[instruction_type].rm_mask;
-    info->mid_bits     = ch[instruction_index+1] & instruction_table[instruction_type].mid_bits; 
+    info->mid_bits     = instruction_table[instruction_type].mid_bits;
     info->op_name      = instruction_table[instruction_type].op_name;
     info->is_immediate = instruction_table[instruction_type].is_immediate;
 
@@ -295,6 +295,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 printf("%d", data);
             } break;
 
+            case InstructionType_SubImmediateFromAccum:
             case InstructionType_AddImmediateToAccum:
             case InstructionType_MovMemToAccum: 
             {

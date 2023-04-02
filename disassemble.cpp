@@ -45,24 +45,44 @@ int main() {
     while (instruction_index < file_size) {
 
         Instruction_Type instruction_type = InstructionType_Count;
+        Type_Bucket types = {};
         for (int index = 0; index < InstructionType_Count; index++) {
             if ((ch[instruction_index] & instruction_table[index].op_mask) == instruction_table[index].op_bits) {
-                instruction_type = (Instruction_Type)index;
-                break;
+                types.array[types.size] = (Instruction_Type)index;
+                types.size++;
             }
+        }
+
+
+        Instruction_Info instruction_info = {};
+        if (types.size > 1) {
+            const int info_array_size = types.size;
+            Instruction_Info info_array[10];
+            for(int index = 0; index < 10; index++)
+            {
+                info_array[index] = {};
+                InitInstructionInfo(&info_array[index], ch, instruction_index, 
+                                    instruction_table, types.array[index]);
+
+                u8 mid_bits_mask = 0b00'111'000; 
+                if (info_array[index].mid_bits == (ch[instruction_index + 1] & mid_bits_mask)) {
+                    instruction_info = info_array[index];
+                    instruction_type = types.array[index];
+                    break;
+                }
+            }
+
+        } else {
+            instruction_type = types.array[0];
+            InitInstructionInfo(&instruction_info, ch, instruction_index, instruction_table, instruction_type);
         }
 
         int bytes_to_next_instruction = 0;
 
-        if (instruction_type != InstructionType_Count) {
-            Instruction_Info instruction_info = {};
-            InitInstructionInfo(&instruction_info, ch, instruction_index, instruction_table, instruction_type);
-            PrintInstructionType(instruction_info);
+        PrintInstructionType(instruction_info);
 
-            DecodeInstruction(instruction_info, instruction_type, ch, 
+        DecodeInstruction(instruction_info, instruction_type, ch, 
                               instruction_index, &bytes_to_next_instruction);
-        }
-
         instruction_index += bytes_to_next_instruction;
         printf("\n");
     }
