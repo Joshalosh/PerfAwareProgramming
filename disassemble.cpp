@@ -54,19 +54,12 @@ int main() {
         }
 
 
-        Instruction_Info instruction_info = {};
         if (types.size > 1) {
-            const int info_array_size = types.size;
-            Instruction_Info info_array[10];
-            for(int index = 0; index < 10; index++)
+            for(int index = 0; index < types.size; index++)
             {
-                info_array[index] = {};
-                InitInstructionInfo(&info_array[index], ch, instruction_index, 
-                                    instruction_table, types.array[index]);
-
                 u8 mid_bits_mask = 0b00'111'000; 
-                if (info_array[index].mid_bits == (ch[instruction_index + 1] & mid_bits_mask)) {
-                    instruction_info = info_array[index];
+                if (instruction_table[types.array[index]].mid_bits == 
+                    (ch[instruction_index + 1] & mid_bits_mask)) {
                     instruction_type = types.array[index];
                     break;
                 }
@@ -74,10 +67,12 @@ int main() {
 
         } else {
             instruction_type = types.array[0];
-            InitInstructionInfo(&instruction_info, ch, instruction_index, instruction_table, instruction_type);
         }
 
         int bytes_to_next_instruction = 0;
+
+        Instruction_Info instruction_info = {};
+        InitInstructionInfo(&instruction_info, ch, instruction_index, instruction_table, instruction_type);
 
         PrintInstructionType(instruction_info);
 
@@ -86,7 +81,6 @@ int main() {
         instruction_index += bytes_to_next_instruction;
         printf("\n");
     }
-
 
     printf("\n");
 }
