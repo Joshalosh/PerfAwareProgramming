@@ -44,6 +44,12 @@ int main() {
     int instruction_index = 0;
     while (instruction_index < file_size) {
 
+        // This is a long process for deciding what the instruction type is going
+        // to be. Some instructions have an identical first bit so we need to account
+        // for that otherwise the first equivalent instruction type is chosen and
+        // that might not be the correct one. Due to this every new instruction byte 
+        // is checked against ALL the possible instructions. If there are multiple hits
+        // then we have to deal with the special case.
         Instruction_Type instruction_type = InstructionType_Count;
         Type_Bucket types = {};
         for (int index = 0; index < InstructionType_Count; index++) {
