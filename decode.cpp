@@ -26,11 +26,7 @@ void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index
 
 void PrintInstructionType(Instruction_Info instruction_info)
 {
-    for (int i = 0; i < 3; i++) {
-        printf("%c", instruction_info.op_name[i]);
-    }
-    
-    printf(" ");
+    printf("%s ", instruction_info.op_name);
 }
 
 char *reg_registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"}, 
@@ -68,26 +64,16 @@ Mod_Type CheckMod(Instruction_Info instruction_info)
 
 void PrintRegister(Instruction_Info instruction_info, char *registers[2][8])
 {
-    for (int index = 0; index < 2; index++) {
-        printf("%c", registers[instruction_info.w_bit][instruction_info.reg][index]);
-    }
+    printf("%s", registers[instruction_info.w_bit][instruction_info.reg]);
 }
 
 void PrintRM(Instruction_Info instruction_info, char *registers[8])
 {
-    int index = 0;
-    while (registers[instruction_info.rm][index] != 0) {
-        printf("%c", registers[instruction_info.rm][index]);
-        index++;
-    }
+    printf("%s", registers[instruction_info.rm]);
 }
 void PrintRM(Instruction_Info instruction_info, char *registers[2][8])
 {
-    int index = 0;
-    while (registers[instruction_info.w_bit][instruction_info.rm][index] != 0) {
-        printf("%c", registers[instruction_info.w_bit][instruction_info.rm][index]);
-        index++;
-    }
+    printf("%s", registers[instruction_info.w_bit][instruction_info.rm]);
 }
 
 

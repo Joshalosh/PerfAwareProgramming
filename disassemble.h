@@ -49,6 +49,19 @@ enum Instruction_Type : u8 {
     InstructionType_SubImmediateRegOrMem,
     InstructionType_SubImmediateFromAccum,
 
+    InstructionType_CmpRegOrMem,
+    InstructionType_CmpImmediateRegOrMem,
+    InstructionType_CmpImmediateWithAccum,
+    InstructionType_CmpAsciiForSubtract,
+    InstructionType_CmpDecimalForSubstract,
+    InstructionType_CmpUMultiply,
+    InstructionType_CmpSMultiply,
+    InstructionType_CmpAsciiForMultiply,
+    InstructionType_CmpUDivide,
+    InstructionType_CmpAsciiForDivide,
+    InstructionType_CmpConvertByteToWord,
+    InstructionType_CmpConvertByteToDWord,
+
     InstructionType_Count,
 };
 
@@ -89,7 +102,16 @@ Instruction instruction_table[InstructionType_Count] = {
 
     {"sub", 0b1111'1100, 0b0010'1000, 2, NULL, 1, 0b11'000'000, 0b00'111'000, NULL, 0b00'000'111, false, false, true},
     {"sub", 0b1111'1100, 0b1000'0000, NULL, 2, 1, 0b11'000'000, NULL, 0b00'101'000, 0b00'000'111, false, true, true},
-    {"sub", 0b1111'1110, 0b0010'1100, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, true, false}};
+    {"sub", 0b1111'1110, 0b0010'1100, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, true, false},
+
+    {"cmp", 0b1111'1100, 0b0011'1000, 2, NULL, 1, 0b11'000'000, 0b00'111'000, NULL, 0b00'000'111, false, false, true},
+    {"cmp", 0b1111'1100, 0b1000'0000, NULL, 2, 1, 0b11'000'000, NULL, 0b00'111'000, 0b00'000'111, false, true, true},
+    {"cmp", 0b1111'1110, 0b0011'1100, NULL, NULL, 1, NULL, NULL, NULL, NULL, false, true, false},
+    {"cmp", 0xFF, 0b0011'1111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"cmp", 0xFF, 0b0010'1111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'100'000, 0b00'000'111, false, false, true},
+    {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'101'000, 0b00'000'111, false, false, true},
+};
 
 #define GAME_ENTITY_H
 #endif
