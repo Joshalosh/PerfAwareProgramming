@@ -84,11 +84,11 @@ Instruction instruction_table[InstructionType_Count] = {
     {"mov", 0b1111'1111, 0b1000'1100, NULL, NULL, NULL, 0b11'000'000, NULL, NULL, 0b00'000'111, false, false, true},
 
     {"add", 0b1111'1100, 0b0, 2, NULL, 1, 0b11'000'000, 0b00'111'000, NULL, 0b00'000'111, false, false, true},
-    {"add", 0b1000'0000, 0b1000'0000, NULL, 2, 1, 0b11'000'000, NULL, 0b0, 0b00'000'111, false, true, true},
-    {"add", 0b0000'0100, 0b0000'0100, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, true, false},
+    {"add", 0b1111'1100, 0b1000'0000, NULL, 2, 1, 0b11'000'000, NULL, 0b0, 0b00'000'111, false, true, true},
+    {"add", 0b1111'1110, 0b0000'0100, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, true, false},
 
     {"sub", 0b1111'1100, 0b0010'1000, 2, NULL, 1, 0b11'000'000, 0b00'111'000, NULL, 0b00'000'111, false, false, true},
-    {"sub", 0b1000'0000, 0b1000'0000, NULL, 2, 1, 0b11'000'000, NULL, 0b00'101'000, 0b00'000'111, false, true, true},
+    {"sub", 0b1111'1100, 0b1000'0000, NULL, 2, 1, 0b11'000'000, NULL, 0b00'101'000, 0b00'000'111, false, true, true},
     {"sub", 0b1111'1110, 0b0010'1100, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, true, false}};
 
 #define GAME_ENTITY_H
