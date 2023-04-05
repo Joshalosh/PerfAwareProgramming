@@ -58,6 +58,7 @@ enum Instruction_Type : u8 {
     InstructionType_CmpSMultiply,
     InstructionType_CmpAsciiForMultiply,
     InstructionType_CmpUDivide,
+    InstructionType_CmpSDivide,
     InstructionType_CmpAsciiForDivide,
     InstructionType_CmpConvertByteToWord,
     InstructionType_CmpConvertByteToDWord,
@@ -111,7 +112,12 @@ Instruction instruction_table[InstructionType_Count] = {
     {"cmp", 0xFF, 0b0010'1111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
     {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'100'000, 0b00'000'111, false, false, true},
     {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'101'000, 0b00'000'111, false, false, true},
-};
+    {"cmp", 0xFF, 0b1101'0100, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, true},
+    {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'110'000, 0b00'000'111, false, false, true},
+    {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'111'000, 0b00'000'111, false, false, true},
+    {"cmp", 0xFF, 0b1101'0101, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, true},
+    {"cmp", 0xFF, 0b1001'1000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"cmp", 0xFF, 0b1001'1001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false}};
 
 #define GAME_ENTITY_H
 #endif
