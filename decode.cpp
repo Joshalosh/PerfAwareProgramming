@@ -182,14 +182,21 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 // if the RM bits equal 110 then there is a 16 bit value that goes
                 // directly into the register.
                 if (instruction_info.rm == 0b110) {
-                    int bytes_to_value = 2;
-                    s16 value = CalculateWord(ch, instruction_index, bytes_to_value);
-                    PrintRegister(instruction_info, reg_registers);
-                    printf(", [");
-                    printf("%d", value);
-                    printf("]");
+                    if (instruction_info.is_immediate) {
+                        PrintImmediateMemModeOperations(instruction_info, ch, mod_registers, 
+                                                        instruction_index, 2, 
+                                                        bytes_to_next_instruction);
 
-                    *bytes_to_next_instruction = 4;
+                    } else {
+                        int bytes_to_value = 2;
+                        s16 value = CalculateWord(ch, instruction_index, bytes_to_value);
+                        PrintRegister(instruction_info, reg_registers);
+                        printf(", [");
+                        printf("%d", value);
+                        printf("]");
+
+                        *bytes_to_next_instruction = 4;
+                    }
 
                 } else if (instruction_info.is_immediate) {
                     PrintImmediateMemModeOperations(instruction_info, ch, mod_registers, 
@@ -281,6 +288,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 printf("%d", data);
             } break;
 
+            case InstructionType_CmpImmediateWithAccum:
             case InstructionType_SubImmediateFromAccum:
             case InstructionType_AddImmediateToAccum:
             case InstructionType_MovMemToAccum: 
