@@ -83,7 +83,7 @@ void PrintDisplacement(s16 value)
         // Do nothing.
 
     } else {
-        s16 sign_mask = 0b10000000'00000000;
+        s16 sign_mask      = 0b10000000'00000000;
         s16 negative_check = value & sign_mask;
 
         char sign = (negative_check) ? '-' : '+';
@@ -138,8 +138,9 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
     // put a variable string in the else statement.
     if (instruction_info.w_bit && !instruction_info.s_bit) {
         printf("word ");
+
         int value_offset = bytes_to_displacement + 2;
-        s16 value = CalculateWord(ch, instruction_index, value_offset);
+        s16 value        = CalculateWord(ch, instruction_index, value_offset);
         printf("%d", value);
 
         *bytes_to_next_instruction = 4 + bytes_to_displacement;
@@ -161,7 +162,7 @@ void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch
     if(instruction_info.w_bit && !instruction_info.s_bit)
     {
         int value_offset = 2;
-        s16 value = CalculateWord(ch, instruction_index, value_offset);
+        s16 value        = CalculateWord(ch, instruction_index, value_offset);
         printf("%d", value);
 
         *bytes_to_next_instruction = 4;
