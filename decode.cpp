@@ -134,6 +134,8 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
     }
     printf("], ");
 
+    // TODO: I can simplify this further probably now that I've 
+    // put a variable string in the else statement.
     if (instruction_info.w_bit && !instruction_info.s_bit) {
         printf("word ");
         int value_offset = bytes_to_displacement + 2;
@@ -143,7 +145,8 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
         *bytes_to_next_instruction = 4 + bytes_to_displacement;
 
     } else {
-        printf("byte %d", ch[instruction_index + 2 + bytes_to_displacement]);
+        char *string = (instruction_info.w_bit) ? "word" : "byte";
+        printf("%s %d", string, ch[instruction_index + 2 + bytes_to_displacement]);
 
         *bytes_to_next_instruction = 3 + bytes_to_displacement;
     }
@@ -338,6 +341,31 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
 
                 PrintRegister(instruction_info, reg_registers);
             }break;
+
+            case InstructionType_JmpJE:
+            case InstructionType_JmpJL:
+            case InstructionType_JmpJLE:
+            case InstructionType_JmpJB:
+            case InstructionType_JmpJBE:
+            case InstructionType_JmpJP:
+            case InstructionType_JmpJO:
+            case InstructionType_JmpJS:
+            case InstructionType_JmpJNE:
+            case InstructionType_JmpJNL:
+            case InstructionType_JmpJNLE:
+            case InstructionType_JmpJNB:
+            case InstructionType_JmpJNBE:
+            case InstructionType_JmpJNP:
+            case InstructionType_JmpJNO:
+            case InstructionType_JmpJNS:
+            case InstructionType_Loop:
+            case InstructionType_LoopZ:
+            case InstructionType_LoopNZ:
+            case InstructionType_JmpJCXZ:
+            {
+                printf("%d", ch[instruction_index+1]);
+                *bytes_to_next_instruction = 2;
+            } break;
 
             default:
             {

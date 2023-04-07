@@ -63,6 +63,27 @@ enum Instruction_Type : u8 {
     InstructionType_CmpConvertByteToWord,
     InstructionType_CmpConvertByteToDWord,
 
+    InstructionType_JmpJE,
+    InstructionType_JmpJL,
+    InstructionType_JmpJLE,
+    InstructionType_JmpJB,
+    InstructionType_JmpJBE,
+    InstructionType_JmpJP,
+    InstructionType_JmpJO,
+    InstructionType_JmpJS,
+    InstructionType_JmpJNE,
+    InstructionType_JmpJNL,
+    InstructionType_JmpJNLE,
+    InstructionType_JmpJNB,
+    InstructionType_JmpJNBE,
+    InstructionType_JmpJNP,
+    InstructionType_JmpJNO,
+    InstructionType_JmpJNS,
+    InstructionType_Loop,
+    InstructionType_LoopZ,
+    InstructionType_LoopNZ,
+    InstructionType_JmpJCXZ,
+
     InstructionType_Count,
 };
 
@@ -117,7 +138,28 @@ Instruction instruction_table[InstructionType_Count] = {
     {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'111'000, 0b00'000'111, false, false, true},
     {"cmp", 0xFF, 0b1101'0101, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, true},
     {"cmp", 0xFF, 0b1001'1000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"cmp", 0xFF, 0b1001'1001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false}};
+    {"cmp", 0xFF, 0b1001'1001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+
+    {"je", 0xFF, 0b0111'0100, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jl", 0xFF, 0b0111'1100, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jle", 0xFF, 0b0111'1110, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jb", 0xFF, 0b0111'0010, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jbe", 0xFF, 0b0111'0110, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jp", 0xFF, 0b0111'1010, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jo", 0xFF, 0b0111'0000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"js", 0xFF, 0b0111'1000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jne", 0xFF, 0b0111'0101, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jnl", 0xFF, 0b0111'1101, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jnle", 0xFF, 0b0111'1111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jnb", 0xFF, 0b0111'0011, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jnbe", 0xFF, 0b0111'0111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jnp", 0xFF, 0b0111'1011, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jno", 0xFF, 0b0111'0001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jns", 0xFF, 0b0111'1001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"loop", 0xFF, 0b1110'0010, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"loopz", 0xFF, 0b1110'0001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"loopnz", 0xFF, 0b1110'0000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"jcxz", 0xFF, 0b1110'0011, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false}};
 
 #define GAME_ENTITY_H
 #endif
