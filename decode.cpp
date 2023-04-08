@@ -134,8 +134,6 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
     }
     printf("], ");
 
-    // TODO: I can simplify this further probably now that I've 
-    // put a variable string in the else statement.
     if (instruction_info.w_bit && !instruction_info.s_bit) {
         printf("word ");
 
