@@ -8,6 +8,18 @@ typedef uint16_t u16;
 typedef int8_t  s8;
 typedef int16_t s16;
 
+struct Register_Map {
+    u16 ax;
+    u16 cx;
+    u16 dx;
+    u16 bx;
+
+    u16 sp;
+    u16 bp;
+    u16 si;
+    u16 di;
+};
+
 struct Instruction_Info {
     u8 opcode;
     u8 d_bit;
