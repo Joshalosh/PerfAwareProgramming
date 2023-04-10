@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <stdint.h>
+
+#include "disassemble.h"
+
+u16 register_map[8] = {};
 #include "decode.cpp"
 
 int main() {
@@ -23,8 +27,12 @@ int main() {
     file = fopen("challenge", "rb");
 #endif
 
-#if 1
+#if 0
     file = fopen("add_sub_cmp", "rb");
+#endif
+
+#if 1 
+    file = fopen("immediate_movs", "rb");
 #endif
 
     printf("The assembly instructions of this file is: \n");
@@ -89,4 +97,5 @@ int main() {
     }
 
     printf("\n");
+    PrintRegisterValues(register_map);
 }

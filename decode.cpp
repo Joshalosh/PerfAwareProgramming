@@ -1,4 +1,3 @@
-#include "disassemble.h"
 
 #define MAX_BUFFER_SIZE 256
 #define MAX_REGISTERS 16
@@ -165,11 +164,27 @@ void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch
 
         *bytes_to_next_instruction = 4;
 
+        register_map[instruction_info.reg] = value;
+
     } else {
         printf("%d", ch[instruction_index + 2]);
 
         *bytes_to_next_instruction = 3;
+
+        register_map[instruction_info.reg] = ch[instruction_index + 2];
     }
+}
+
+void PrintRegisterValues(u16 *register_map)
+{
+    printf("AX ---> %d\n", register_map[0]); 
+    printf("CX ---> %d\n", register_map[1]); 
+    printf("DX ---> %d\n", register_map[2]); 
+    printf("BX ---> %d\n", register_map[3]); 
+    printf("SP ---> %d\n", register_map[4]); 
+    printf("BP ---> %d\n", register_map[5]); 
+    printf("SI ---> %d\n", register_map[6]); 
+    printf("DI ---> %d\n", register_map[7]); 
 }
 
 void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instruction_type, 
@@ -286,6 +301,8 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                     data = ch[instruction_index + 1];
                     *bytes_to_next_instruction = 2;
                 }
+
+                register_map[instruction_info.reg] = data;
 
                 printf("%d", data);
             } break;
