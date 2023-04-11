@@ -259,11 +259,15 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                         printf(", ");
                         PrintRM(instruction_info, reg_registers);
 
+                        register_map[instruction_info.reg] = register_map[instruction_info.rm];
+
                     } else {
                         PrintRM(instruction_info, reg_registers);
                         printf(", ");
                         if(!instruction_info.is_immediate) {
                             PrintRegister(instruction_info, reg_registers);
+
+                            register_map[instruction_info.rm] = register_map[instruction_info.reg];
                         }
                     }
 

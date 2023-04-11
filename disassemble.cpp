@@ -31,8 +31,12 @@ int main() {
     file = fopen("add_sub_cmp", "rb");
 #endif
 
-#if 1 
+#if 0 
     file = fopen("immediate_movs", "rb");
+#endif
+
+#if 1 
+    file = fopen("register_movs", "rb");
 #endif
 
     printf("The assembly instructions of this file is: \n");
