@@ -187,8 +187,8 @@ void PrintRegisterValues(u16 *register_map)
     printf("DI ---> %d\n", register_map[7]); 
 }
 
-void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instruction_type, 
-                       char *ch, int instruction_index, int *bytes_to_next_instruction)
+void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instruction_type, char *ch, 
+                       int instruction_index, int *bytes_to_next_instruction, Flags *flags)
 {
     if (instruction_info.has_second_instruction_byte) {
         Mod_Type mod_type = CheckMod(instruction_info);

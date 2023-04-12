@@ -8,16 +8,19 @@ typedef uint16_t u16;
 typedef int8_t  s8;
 typedef int16_t s16;
 
-struct Register_Map {
-    u16 ax;
-    u16 cx;
-    u16 dx;
-    u16 bx;
-
-    u16 sp;
-    u16 bp;
-    u16 si;
-    u16 di;
+union Flags {
+    u8 flag_array[9];
+    struct {
+        u8 sign;
+        u8 zero;
+        u8 aux_carry;
+        u8 parity;
+        u8 carry;
+        u8 overflow;
+        u8 directional;
+        u8 interrupt;
+        u8 trap;
+    };
 };
 
 struct Instruction_Info {

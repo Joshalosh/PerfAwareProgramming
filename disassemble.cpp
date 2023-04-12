@@ -94,8 +94,9 @@ int main() {
 
         PrintInstructionType(instruction_info);
 
-        DecodeInstruction(instruction_info, instruction_type, ch, 
-                              instruction_index, &bytes_to_next_instruction);
+        Flags flags = {};
+        DecodeInstruction(instruction_info, instruction_type, ch, instruction_index, 
+                          &bytes_to_next_instruction, &flags);
         instruction_index += bytes_to_next_instruction;
         printf("\n");
     }
