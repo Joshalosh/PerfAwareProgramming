@@ -152,6 +152,36 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
     }
 }
 
+void SimulateRegisters(Instruction_Info instruction_info, u8 reg_type, s16 value)
+{
+    switch (instruction_info.arithmetic_type) {
+        case ArithType_None: 
+        {
+            register_map[reg_type] = value;
+        } break;
+
+        case ArithType_Add:
+        {
+            register_map[reg_type] += value;
+        } break;
+
+        case ArithType_Sub:
+        {
+            register_map[reg_type] -= value;
+        } break;
+
+        case ArithType_Cmp:
+        {
+            register_map[reg_type] = register_map[reg_type];
+        } break;
+
+        default:
+        {
+            printf("Something has gone real bad boo boo baby");
+        }
+    }
+}
+
 void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch, char *reg_registers[2][8],
                                      int instruction_index, int *bytes_to_next_instruction)
 {
@@ -168,14 +198,14 @@ void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch
 
         //TODO: I'm going to need to create a special simulation function to handle 
         // the different register operations.
-        register_map[instruction_info.reg] = value;
+        SimulateRegisters(instruction_info, instruction_info.rm, value);
 
     } else {
         printf("%d", ch[instruction_index + 2]);
 
         *bytes_to_next_instruction = 3;
 
-        register_map[instruction_info.reg] = ch[instruction_index + 2];
+        SimulateRegisters(instruction_info, instruction_info.rm, ch[instruction_index + 2]);
     }
 }
 
@@ -263,7 +293,8 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                         printf(", ");
                         PrintRM(instruction_info, reg_registers);
 
-                        register_map[instruction_info.reg] = register_map[instruction_info.rm];
+                        SimulateRegisters(instruction_info, instruction_info.reg, 
+                                          register_map[instruction_info.rm]);
 
                     } else {
                         PrintRM(instruction_info, reg_registers);
@@ -271,7 +302,8 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                         if(!instruction_info.is_immediate) {
                             PrintRegister(instruction_info, reg_registers);
 
-                            register_map[instruction_info.rm] = register_map[instruction_info.reg];
+                            SimulateRegisters(instruction_info, instruction_info.rm,
+                                              register_map[instruction_info.reg]);
                         }
                     }
 
