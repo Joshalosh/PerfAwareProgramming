@@ -23,21 +23,6 @@ union Flags {
     };
 };
 
-struct Instruction_Info {
-    u8 opcode;
-    u8 d_bit;
-    u8 w_bit;
-    u8 s_bit;
-    u8 mod;
-    u8 reg;
-    u8 rm; 
-    u8 mid_bits;
-
-    char *op_name;
-    bool is_immediate;
-    bool has_second_instruction_byte;
-};
-
 enum Mod_Type : u8 {
     Mod_MemModeNoDisp = 0b00,
     Mod_MemModeDisp8  = 0b01,
@@ -107,6 +92,33 @@ struct Type_Bucket {
     int size;
 };
 
+enum Arithmetic_Type : u8 {
+    ArithType_None,
+    ArithType_Add,
+    ArithType_Sub,
+    ArithType_Cmp,
+
+    ArithType_Count,
+};
+
+struct Instruction_Info {
+    u8 opcode;
+    u8 d_bit;
+    u8 w_bit;
+    u8 s_bit;
+    u8 mod;
+    u8 reg;
+    u8 rm; 
+    u8 mid_bits;
+
+    char *op_name;
+    bool is_immediate;
+    bool has_second_instruction_byte;
+    bool is_arithmetic;
+
+    u8 arithmetic_type;
+};
+
 struct Instruction {
     char *op_name;
     u8 op_mask;
@@ -122,59 +134,62 @@ struct Instruction {
     bool reg_on_first_byte;
     bool is_immediate;
     bool has_second_instruction_byte;
+    bool is_arithmetic;
+
+    u8 arithmetic_type;
 };
 
 Instruction instruction_table[InstructionType_Count] = {
-    {"mov", 0b1111'1100, 0b1000'1000, 2, NULL, 1, 0b11'000'000, 0b00'111'000, NULL, 0b00'000'111, false, false, true},
-    {"mov", 0b1111'1110, 0b1100'0110, NULL, NULL, 1, 0b11'000'000, 0, 0b00'000'000, 0b00'000'111, false, true, true},
-    {"mov", 0b1111'0000, 0b1011'0000, NULL, NULL, 0b0000'1000, NULL, 0b0000'0111, NULL, NULL, true, true, false},
-    {"mov", 0b1111'1110, 0b1010'0000, NULL, NULL, 1, NULL, NULL, NULL, NULL, false, false, false},
-    {"mov", 0b1111'1110, 0b1010'0010, NULL, NULL, 1, NULL, NULL, NULL, NULL, false, false, false},
-    {"mov", 0b1111'1111, 0b1000'1110, NULL, NULL, NULL, 0b11'000'000, NULL, NULL, 0b00'000'111, false, false, true},
-    {"mov", 0b1111'1111, 0b1000'1100, NULL, NULL, NULL, 0b11'000'000, NULL, NULL, 0b00'000'111, false, false, true},
+    {"mov", 0b1111'1100, 0b1000'1000, 2, NULL, 1, 0b11'000'000, 0b00'111'000, NULL, 0b00'000'111, false, false, true, false, ArithType_None},
+    {"mov", 0b1111'1110, 0b1100'0110, NULL, NULL, 1, 0b11'000'000, 0, 0b00'000'000, 0b00'000'111, false, true, true, false, ArithType_None},
+    {"mov", 0b1111'0000, 0b1011'0000, NULL, NULL, 0b0000'1000, NULL, 0b0000'0111, NULL, NULL, true, true, false, false, ArithType_None},
+    {"mov", 0b1111'1110, 0b1010'0000, NULL, NULL, 1, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"mov", 0b1111'1110, 0b1010'0010, NULL, NULL, 1, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"mov", 0b1111'1111, 0b1000'1110, NULL, NULL, NULL, 0b11'000'000, NULL, NULL, 0b00'000'111, false, false, true, false, ArithType_None},
+    {"mov", 0b1111'1111, 0b1000'1100, NULL, NULL, NULL, 0b11'000'000, NULL, NULL, 0b00'000'111, false, false, true, false, ArithType_None},
 
-    {"add", 0b1111'1100, 0b0, 2, NULL, 1, 0b11'000'000, 0b00'111'000, NULL, 0b00'000'111, false, false, true},
-    {"add", 0b1111'1100, 0b1000'0000, NULL, 2, 1, 0b11'000'000, NULL, 0b0, 0b00'000'111, false, true, true},
-    {"add", 0b1111'1110, 0b0000'0100, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, true, false},
+    {"add", 0b1111'1100, 0b0, 2, NULL, 1, 0b11'000'000, 0b00'111'000, NULL, 0b00'000'111, false, false, true, true, ArithType_Add},
+    {"add", 0b1111'1100, 0b1000'0000, NULL, 2, 1, 0b11'000'000, NULL, 0b0, 0b00'000'111, false, true, true, true, ArithType_Add},
+    {"add", 0b1111'1110, 0b0000'0100, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, true, false, true, ArithType_Add},
 
-    {"sub", 0b1111'1100, 0b0010'1000, 2, NULL, 1, 0b11'000'000, 0b00'111'000, NULL, 0b00'000'111, false, false, true},
-    {"sub", 0b1111'1100, 0b1000'0000, NULL, 2, 1, 0b11'000'000, NULL, 0b00'101'000, 0b00'000'111, false, true, true},
-    {"sub", 0b1111'1110, 0b0010'1100, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, true, false},
+    {"sub", 0b1111'1100, 0b0010'1000, 2, NULL, 1, 0b11'000'000, 0b00'111'000, NULL, 0b00'000'111, false, false, true, true, ArithType_Sub},
+    {"sub", 0b1111'1100, 0b1000'0000, NULL, 2, 1, 0b11'000'000, NULL, 0b00'101'000, 0b00'000'111, false, true, true, true, ArithType_Sub},
+    {"sub", 0b1111'1110, 0b0010'1100, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, true, false, true, ArithType_Sub},
 
-    {"cmp", 0b1111'1100, 0b0011'1000, 2, NULL, 1, 0b11'000'000, 0b00'111'000, NULL, 0b00'000'111, false, false, true},
-    {"cmp", 0b1111'1100, 0b1000'0000, NULL, 2, 1, 0b11'000'000, NULL, 0b00'111'000, 0b00'000'111, false, true, true},
-    {"cmp", 0b1111'1110, 0b0011'1100, NULL, NULL, 1, NULL, NULL, NULL, NULL, false, true, false},
-    {"cmp", 0xFF, 0b0011'1111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"cmp", 0xFF, 0b0010'1111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'100'000, 0b00'000'111, false, false, true},
-    {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'101'000, 0b00'000'111, false, false, true},
-    {"cmp", 0xFF, 0b1101'0100, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, true},
-    {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'110'000, 0b00'000'111, false, false, true},
-    {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'111'000, 0b00'000'111, false, false, true},
-    {"cmp", 0xFF, 0b1101'0101, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, true},
-    {"cmp", 0xFF, 0b1001'1000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"cmp", 0xFF, 0b1001'1001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
+    {"cmp", 0b1111'1100, 0b0011'1000, 2, NULL, 1, 0b11'000'000, 0b00'111'000, NULL, 0b00'000'111, false, false, true, true, ArithType_Cmp},
+    {"cmp", 0b1111'1100, 0b1000'0000, NULL, 2, 1, 0b11'000'000, NULL, 0b00'111'000, 0b00'000'111, false, true, true, true, ArithType_Cmp},
+    {"cmp", 0b1111'1110, 0b0011'1100, NULL, NULL, 1, NULL, NULL, NULL, NULL, false, true, false, true, ArithType_Cmp},
+    {"cmp", 0xFF, 0b0011'1111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, true, ArithType_Cmp},
+    {"cmp", 0xFF, 0b0010'1111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, true, ArithType_Cmp},
+    {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'100'000, 0b00'000'111, false, false, true, true, ArithType_Cmp},
+    {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'101'000, 0b00'000'111, false, false, true, true, ArithType_Cmp},
+    {"cmp", 0xFF, 0b1101'0100, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, true, true, ArithType_Cmp},
+    {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'110'000, 0b00'000'111, false, false, true, true, ArithType_Cmp},
+    {"cmp", 0b1111'1110, 0b1111'0110, NULL, NULL, 1, 0b11'000'000, NULL, 0b00'111'000, 0b00'000'111, false, false, true, true, ArithType_Cmp},
+    {"cmp", 0xFF, 0b1101'0101, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, true, true, ArithType_Cmp},
+    {"cmp", 0xFF, 0b1001'1000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, true, ArithType_Cmp},
+    {"cmp", 0xFF, 0b1001'1001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, true, ArithType_Cmp},
 
-    {"je", 0xFF, 0b0111'0100, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jl", 0xFF, 0b0111'1100, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jle", 0xFF, 0b0111'1110, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jb", 0xFF, 0b0111'0010, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jbe", 0xFF, 0b0111'0110, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jp", 0xFF, 0b0111'1010, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jo", 0xFF, 0b0111'0000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"js", 0xFF, 0b0111'1000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jne", 0xFF, 0b0111'0101, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jnl", 0xFF, 0b0111'1101, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jnle", 0xFF, 0b0111'1111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jnb", 0xFF, 0b0111'0011, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jnbe", 0xFF, 0b0111'0111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jnp", 0xFF, 0b0111'1011, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jno", 0xFF, 0b0111'0001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jns", 0xFF, 0b0111'1001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"loop", 0xFF, 0b1110'0010, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"loopz", 0xFF, 0b1110'0001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"loopnz", 0xFF, 0b1110'0000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false},
-    {"jcxz", 0xFF, 0b1110'0011, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false}};
+    {"je", 0xFF, 0b0111'0100, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jl", 0xFF, 0b0111'1100, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jle", 0xFF, 0b0111'1110, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jb", 0xFF, 0b0111'0010, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jbe", 0xFF, 0b0111'0110, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jp", 0xFF, 0b0111'1010, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jo", 0xFF, 0b0111'0000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"js", 0xFF, 0b0111'1000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jne", 0xFF, 0b0111'0101, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jnl", 0xFF, 0b0111'1101, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jnle", 0xFF, 0b0111'1111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jnb", 0xFF, 0b0111'0011, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jnbe", 0xFF, 0b0111'0111, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jnp", 0xFF, 0b0111'1011, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jno", 0xFF, 0b0111'0001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jns", 0xFF, 0b0111'1001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"loop", 0xFF, 0b1110'0010, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"loopz", 0xFF, 0b1110'0001, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"loopnz", 0xFF, 0b1110'0000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None},
+    {"jcxz", 0xFF, 0b1110'0011, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false, false, false, false, ArithType_None}};
 
 #define GAME_ENTITY_H
 #endif

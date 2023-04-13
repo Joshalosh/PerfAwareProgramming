@@ -6,15 +6,17 @@
 void InitInstructionInfo(Instruction_Info *info, char *ch, int instruction_index,
                          Instruction *instruction_table, Instruction_Type instruction_type)
 {
-    info->opcode       = ch[instruction_index] & instruction_table[instruction_type].op_mask;
-    info->d_bit        = ch[instruction_index] & instruction_table[instruction_type].d_mask;
-    info->s_bit        = ch[instruction_index] & instruction_table[instruction_type].s_mask;
-    info->w_bit        = ch[instruction_index] & instruction_table[instruction_type].w_mask;
-    info->mod          = (ch[instruction_index+1] & instruction_table[instruction_type].mod_mask) >> 6;
-    info->rm           = ch[instruction_index+1] & instruction_table[instruction_type].rm_mask;
-    info->mid_bits     = instruction_table[instruction_type].mid_bits;
-    info->op_name      = instruction_table[instruction_type].op_name;
-    info->is_immediate = instruction_table[instruction_type].is_immediate;
+    info->opcode          = ch[instruction_index] & instruction_table[instruction_type].op_mask;
+    info->d_bit           = ch[instruction_index] & instruction_table[instruction_type].d_mask;
+    info->s_bit           = ch[instruction_index] & instruction_table[instruction_type].s_mask;
+    info->w_bit           = ch[instruction_index] & instruction_table[instruction_type].w_mask;
+    info->mod             = (ch[instruction_index+1] & instruction_table[instruction_type].mod_mask) >> 6;
+    info->rm              = ch[instruction_index+1] & instruction_table[instruction_type].rm_mask;
+    info->mid_bits        = instruction_table[instruction_type].mid_bits;
+    info->op_name         = instruction_table[instruction_type].op_name;
+    info->is_immediate    = instruction_table[instruction_type].is_immediate;
+    info->is_arithmetic   = instruction_table[instruction_type].is_arithmetic;
+    info->arithmetic_type = instruction_table[instruction_type].arithmetic_type;
 
     info->reg = (instruction_table[instruction_type].reg_on_first_byte) ? 
         ch[instruction_index] & instruction_table[instruction_type].reg_mask :
@@ -164,6 +166,8 @@ void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch
 
         *bytes_to_next_instruction = 4;
 
+        //TODO: I'm going to need to create a special simulation function to handle 
+        // the different register operations.
         register_map[instruction_info.reg] = value;
 
     } else {
@@ -175,7 +179,7 @@ void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch
     }
 }
 
-void PrintRegisterValues(u16 *register_map)
+void PrintRegisterValues(s16 *register_map)
 {
     printf("AX ---> %d\n", register_map[0]); 
     printf("CX ---> %d\n", register_map[1]); 

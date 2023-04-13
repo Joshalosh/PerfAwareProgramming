@@ -3,7 +3,7 @@
 
 #include "disassemble.h"
 
-u16 register_map[8] = {};
+s16 register_map[8] = {};
 #include "decode.cpp"
 
 int main() {
@@ -35,8 +35,12 @@ int main() {
     file = fopen("immediate_movs", "rb");
 #endif
 
-#if 1 
+#if 0 
     file = fopen("register_movs", "rb");
+#endif
+
+#if 1 
+    file = fopen("add_sub_cmp_sim", "rb");
 #endif
 
     printf("The assembly instructions of this file is: \n");
