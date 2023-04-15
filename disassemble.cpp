@@ -3,7 +3,6 @@
 
 #include "disassemble.h"
 
-s16 register_map[8] = {};
 #include "decode.cpp"
 
 int main() {
@@ -58,6 +57,8 @@ int main() {
     }
 
     int instruction_index = 0;
+
+    s16 register_map[8] = {};
     while (instruction_index < file_size) {
 
         // This is a long process for deciding what the instruction type is going
@@ -100,7 +101,7 @@ int main() {
 
         Flags flags = {};
         DecodeInstruction(instruction_info, instruction_type, ch, instruction_index, 
-                          &bytes_to_next_instruction, &flags);
+                          &bytes_to_next_instruction, register_map, &flags);
         instruction_index += bytes_to_next_instruction;
         printf("\n");
     }

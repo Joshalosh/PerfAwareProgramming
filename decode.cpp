@@ -152,7 +152,7 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
     }
 }
 
-void SimulateRegisters(Instruction_Info instruction_info, u8 reg_type, s16 value)
+void SimulateRegisters(Instruction_Info instruction_info, u8 reg_type, s16 *register_map, s16 value)
 {
     switch (instruction_info.arithmetic_type) {
         case ArithType_None: 
@@ -183,7 +183,7 @@ void SimulateRegisters(Instruction_Info instruction_info, u8 reg_type, s16 value
 }
 
 void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch, char *reg_registers[2][8],
-                                     int instruction_index, int *bytes_to_next_instruction)
+                                     int instruction_index, int *bytes_to_next_instruction, s16 *register_map)
 {
     PrintRM(instruction_info, reg_registers);
     printf(", ");
@@ -198,14 +198,14 @@ void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch
 
         //TODO: I'm going to need to create a special simulation function to handle 
         // the different register operations.
-        SimulateRegisters(instruction_info, instruction_info.rm, value);
+        SimulateRegisters(instruction_info, instruction_info.rm, register_map, value);
 
     } else {
         printf("%d", ch[instruction_index + 2]);
 
         *bytes_to_next_instruction = 3;
 
-        SimulateRegisters(instruction_info, instruction_info.rm, ch[instruction_index + 2]);
+        SimulateRegisters(instruction_info, instruction_info.rm, register_map, ch[instruction_index + 2]);
     }
 }
 
@@ -222,7 +222,7 @@ void PrintRegisterValues(s16 *register_map)
 }
 
 void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instruction_type, char *ch, 
-                       int instruction_index, int *bytes_to_next_instruction, Flags *flags)
+                       int instruction_index, int *bytes_to_next_instruction, s16 *register_map, Flags *flags)
 {
     if (instruction_info.has_second_instruction_byte) {
         Mod_Type mod_type = CheckMod(instruction_info);
@@ -293,7 +293,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                         printf(", ");
                         PrintRM(instruction_info, reg_registers);
 
-                        SimulateRegisters(instruction_info, instruction_info.reg, 
+                        SimulateRegisters(instruction_info, instruction_info.reg, register_map, 
                                           register_map[instruction_info.rm]);
 
                     } else {
@@ -302,7 +302,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                         if(!instruction_info.is_immediate) {
                             PrintRegister(instruction_info, reg_registers);
 
-                            SimulateRegisters(instruction_info, instruction_info.rm,
+                            SimulateRegisters(instruction_info, instruction_info.rm, register_map,
                                               register_map[instruction_info.reg]);
                         }
                     }
@@ -310,8 +310,8 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                     *bytes_to_next_instruction = 2;
 
                 } else {
-                    PrintImmediateRegModeOperations(instruction_info, ch, reg_registers,
-                                                    instruction_index, bytes_to_next_instruction);
+                    PrintImmediateRegModeOperations(instruction_info, ch, reg_registers, instruction_index, 
+                                                    bytes_to_next_instruction, register_map);
                 }
             } break;  
 
