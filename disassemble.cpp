@@ -59,6 +59,7 @@ int main() {
     int instruction_index = 0;
 
     s16 register_map[8] = {};
+    Flags flags = {};
     while (instruction_index < file_size) {
 
         // This is a long process for deciding what the instruction type is going
@@ -99,10 +100,14 @@ int main() {
 
         PrintInstructionType(instruction_info);
 
-        Flags flags = {};
         DecodeInstruction(instruction_info, instruction_type, ch, instruction_index, 
                           &bytes_to_next_instruction, register_map, &flags);
         instruction_index += bytes_to_next_instruction;
+
+        printf(" FLAGS --> "); 
+        for(int i = 0; i < 9; i++) {
+            printf("%d ", flags.flag_array[i]);
+        }
         printf("\n");
     }
 

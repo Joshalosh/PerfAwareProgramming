@@ -152,27 +152,32 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
     }
 }
 
-void SimulateRegisters(Instruction_Info instruction_info, u8 reg_type, s16 *register_map, s16 value)
+void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_type, 
+                       s16 *register_map, s16 value)
 {
+    s16 result = 0;
     switch (instruction_info.arithmetic_type) {
         case ArithType_None: 
         {
             register_map[reg_type] = value;
+            result = register_map[reg_type];
         } break;
 
         case ArithType_Add:
         {
             register_map[reg_type] += value;
+            result = register_map[reg_type];
         } break;
 
         case ArithType_Sub:
         {
             register_map[reg_type] -= value;
+            result = register_map[reg_type];
         } break;
 
         case ArithType_Cmp:
         {
-            register_map[reg_type] = register_map[reg_type];
+            result = register_map[reg_type] - value;
         } break;
 
         default:
@@ -180,10 +185,25 @@ void SimulateRegisters(Instruction_Info instruction_info, u8 reg_type, s16 *regi
             printf("Something has gone real bad boo boo baby");
         }
     }
+
+    if(instruction_info.is_arithmetic && result == 0) {
+        flags->zero = 1;
+
+    } else {
+        flags->zero = 0;
+    }
+
+    if(instruction_info.is_arithmetic && result & (1 << 16)) {
+        flags->sign = 1;
+
+    } else {
+        flags->sign = 0;
+    }
 }
 
 void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch, char *reg_registers[2][8],
-                                     int instruction_index, int *bytes_to_next_instruction, s16 *register_map)
+                                     int instruction_index, int *bytes_to_next_instruction, s16 *register_map,
+                                     Flags *flags)
 {
     PrintRM(instruction_info, reg_registers);
     printf(", ");
@@ -198,14 +218,14 @@ void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch
 
         //TODO: I'm going to need to create a special simulation function to handle 
         // the different register operations.
-        SimulateRegisters(instruction_info, instruction_info.rm, register_map, value);
+        SimulateRegisters(instruction_info, flags, instruction_info.rm, register_map, value);
 
     } else {
         printf("%d", ch[instruction_index + 2]);
 
         *bytes_to_next_instruction = 3;
 
-        SimulateRegisters(instruction_info, instruction_info.rm, register_map, ch[instruction_index + 2]);
+        SimulateRegisters(instruction_info, flags, instruction_info.rm, register_map, ch[instruction_index + 2]);
     }
 }
 
@@ -293,7 +313,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                         printf(", ");
                         PrintRM(instruction_info, reg_registers);
 
-                        SimulateRegisters(instruction_info, instruction_info.reg, register_map, 
+                        SimulateRegisters(instruction_info, flags, instruction_info.reg, register_map, 
                                           register_map[instruction_info.rm]);
 
                     } else {
@@ -302,7 +322,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                         if(!instruction_info.is_immediate) {
                             PrintRegister(instruction_info, reg_registers);
 
-                            SimulateRegisters(instruction_info, instruction_info.rm, register_map,
+                            SimulateRegisters(instruction_info, flags, instruction_info.rm, register_map,
                                               register_map[instruction_info.reg]);
                         }
                     }
@@ -311,7 +331,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
 
                 } else {
                     PrintImmediateRegModeOperations(instruction_info, ch, reg_registers, instruction_index, 
-                                                    bytes_to_next_instruction, register_map);
+                                                    bytes_to_next_instruction, register_map, flags);
                 }
             } break;  
 
@@ -342,7 +362,8 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                     *bytes_to_next_instruction = 2;
                 }
 
-                register_map[instruction_info.reg] = data;
+
+                SimulateRegisters(instruction_info, flags, instruction_info.reg, register_map, data);
 
                 printf("%d", data);
             } break;
