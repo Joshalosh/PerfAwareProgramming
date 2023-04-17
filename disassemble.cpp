@@ -38,8 +38,12 @@ int main() {
     file = fopen("register_movs", "rb");
 #endif
 
-#if 1 
+#if 0 
     file = fopen("add_sub_cmp_sim", "rb");
+#endif
+
+#if 1 
+    file = fopen("challenge_flags", "rb");
 #endif
 
     printf("The assembly instructions of this file is: \n");

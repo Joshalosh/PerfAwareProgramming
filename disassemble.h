@@ -1,6 +1,6 @@
 #if !defined(GAME_ENTITY_H)
 
-#define ARRAY_COUNT(array) (sizeof(array) / ((array)[0]))
+#define ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
 
 typedef uint8_t  u8;
 typedef uint16_t u16;

@@ -183,21 +183,20 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
         default:
         {
             printf("Something has gone real bad boo boo baby");
+        } break;
+    }
+
+    if(instruction_info.is_arithmetic) {
+        for(int index = 0; index < ARRAY_COUNT(flags->flag_array); index++) {
+            flags->flag_array[index] = 0;
         }
-    }
 
-    if(instruction_info.is_arithmetic && result == 0) {
-        flags->zero = 1;
-
-    } else {
-        flags->zero = 0;
-    }
-
-    if(instruction_info.is_arithmetic && result & (1 << 16)) {
-        flags->sign = 1;
-
-    } else {
-        flags->sign = 0;
+        if(result == 0) {
+            flags->zero = 1;
+        }
+        if(result & (1 << 16)) {
+            flags->sign = 1;
+        }
     }
 }
 
