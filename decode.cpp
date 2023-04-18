@@ -98,7 +98,7 @@ void PrintDisplacement(s16 value)
 
 s16 CalculateWord(char *ch, int instruction_index, int offset)
 {
-    s16 result;
+    s16 result = 0;
     result = ((ch[instruction_index + offset + 1] & 0xFF) << 8) | (ch[instruction_index + offset] & 0xFF);
 
     return result;
