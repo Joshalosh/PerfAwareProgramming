@@ -197,6 +197,19 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
         if(result & (1 << 16)) {
             flags->sign = 1;
         }
+        if(result % 2 == 0)
+        {
+            flags->parity = 1;
+        }
+        if(((register_map[reg_type] & (1 << 16)) &&
+           (value & (1 << 16)) &&
+           (!(result & (1 << 16)))) ||
+           (!(register_map[reg_type] & (1 << 16)) &&
+           (!value & (1 << 16)) &&
+           ((result & (1 << 16)))))
+       {
+           flags->overflow = 1;
+       }
     }
 }
 
