@@ -155,29 +155,22 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
 void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_type, 
                        s16 *register_map, s16 value)
 {
-    s16 result = 0;
+    s16 new_reg_value = 0;
     switch (instruction_info.arithmetic_type) {
         case ArithType_None: 
         {
-            register_map[reg_type] = value;
-            result = register_map[reg_type];
+            new_reg_value = value;
         } break;
 
         case ArithType_Add:
         {
-            register_map[reg_type] += value;
-            result = register_map[reg_type];
-        } break;
-
-        case ArithType_Sub:
-        {
-            register_map[reg_type] -= value;
-            result = register_map[reg_type];
+            new_reg_value = register_map[reg_type] + value;
         } break;
 
         case ArithType_Cmp:
+        case ArithType_Sub:
         {
-            result = register_map[reg_type] - value;
+            new_reg_value  = register_map[reg_type] - value;
         } break;
 
         default:
@@ -191,22 +184,27 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
             flags->flag_array[index] = 0;
         }
 
-        if(result == 0) {
+        if(new_reg_value == 0) {
             flags->zero = 1;
         }
-        if(result & (1 << 16)) {
+        if(new_reg_value & (1 << 16)) {
             flags->sign = 1;
         }
-        if(result % 2 == 0)
+        if(new_reg_value % 2 == 0)
         {
             flags->parity = 1;
         }
-        if(((register_map[reg_type] & (1 << 16)) == (value & (1 << 16))) &&
-           ((register_map[reg_type] & (1 << 16)) != (result & (1 << 16))) &&
-           ((value & (1 << 16)) != (result & (1 << 16))))
+        if((register_map[reg_type] & (1 << 16)) == (value & (1 << 16)) &&
+           (register_map[reg_type] & (1 << 16)) != (new_reg_value & (1 << 16)) &&
+           (value & (1 << 16)) != (new_reg_value & (1 << 16)))
        {
            flags->overflow = 1;
        }
+    }
+
+    if(instruction_info.arithmetic_type != ArithType_Cmp)
+    {
+        register_map[reg_type] = new_reg_value;
     }
 }
 
