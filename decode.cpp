@@ -197,9 +197,16 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
         if((register_map[reg_type] & (1 << 16)) == (value & (1 << 16)) &&
            (register_map[reg_type] & (1 << 16)) != (new_reg_value & (1 << 16)) &&
            (value & (1 << 16)) != (new_reg_value & (1 << 16)))
-       {
+        {
            flags->overflow = 1;
-       }
+        }
+        // just a little test for negative bit operations.
+        if (1)
+        {
+            s8 num = 4;
+            num = ~num;
+            num += 1;
+        }
     }
 
     if(instruction_info.arithmetic_type != ArithType_Cmp)
