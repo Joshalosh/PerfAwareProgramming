@@ -156,6 +156,7 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
                        s16 *register_map, s16 value)
 {
     s16 new_reg_value = 0;
+    s16 sub_value = value;
     switch (instruction_info.arithmetic_type) {
         case ArithType_None: 
         {
@@ -170,7 +171,8 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
         case ArithType_Cmp:
         case ArithType_Sub:
         {
-            new_reg_value  = register_map[reg_type] - value;
+            sub_value = ~value + 1;
+            new_reg_value  = register_map[reg_type] + sub_value;
         } break;
 
         default:
@@ -194,16 +196,16 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
         {
             flags->parity = 1;
         }
-        if((register_map[reg_type] & (1 << 16)) == (value & (1 << 16)) &&
+        if((register_map[reg_type] & (1 << 16)) == (sub_value & (1 << 16)) &&
            (register_map[reg_type] & (1 << 16)) != (new_reg_value & (1 << 16)) &&
-           (value & (1 << 16)) != (new_reg_value & (1 << 16)))
+           (sub_value & (1 << 16)) != (new_reg_value & (1 << 16)))
         {
            flags->overflow = 1;
         }
         // just a little test for negative bit operations.
         if (1)
         {
-            s8 num = 4;
+            s8 num = -4;
             num = ~num;
             num += 1;
         }
