@@ -204,12 +204,18 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
         }
 
         flags->carry = instruction_info.arithmetic_type == ArithType_Sub ? 
-                       new_reg_value > register_map[reg_type] : 
+                       (u16)new_reg_value > (u16)register_map[reg_type] : 
                        (u16)new_reg_value < (u16)register_map[reg_type];
 
+        //Auxiliary carry checking.
+        u8 new_reg_lo_nibble = new_reg_value & 0b0000'1111;
+        u8 new_reg_hi_nibble = new_reg_value & 0b1111'0000;
+        u8 old_reg_lo_nibble = register_map[reg_type] & 0b0000'1111;
+        u8 old_reg_hi_nibble = register_map[reg_type] & 0b1111'0000;
+
         flags->aux_carry = instruction_info.arithmetic_type == ArithType_Sub ? 
-                           (s8)new_reg_value > (s8)register_map[reg_type] : 
-                           (u8)new_reg_value < (u8)register_map[reg_type];
+                           new_reg_hi_nibble > old_reg_hi_nibble : 
+                           new_reg_lo_nibble < old_reg_lo_nibble;
 
         // just a little test for negative bit operations.
         if (1)
