@@ -202,12 +202,21 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
         {
            flags->overflow = 1;
         }
+
+        flags->carry = instruction_info.arithmetic_type == ArithType_Sub ? 
+                       new_reg_value > register_map[reg_type] : 
+                       (u16)new_reg_value < (u16)register_map[reg_type];
+
+        flags->aux_carry = instruction_info.arithmetic_type == ArithType_Sub ? 
+                           (s8)new_reg_value > (s8)register_map[reg_type] : 
+                           (u8)new_reg_value < (u8)register_map[reg_type];
+
         // just a little test for negative bit operations.
         if (1)
         {
-            s8 num = -4;
-            num = ~num;
-            num += 1;
+            s16 num = 30000;
+            s16 new_num = num + 10000;
+            bool truth = num < new_num;
         }
     }
 
