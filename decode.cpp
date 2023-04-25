@@ -124,13 +124,12 @@ void PrintMemModeOperations(Instruction_Info instruction_info, char *reg_registe
 }
 
 void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch, char *mod_registers[8],
-                                     int instruction_index, s16 bytes_to_displacement, 
-                                     int *bytes_to_next_instruction)
+                                     int *instruction_index, s16 bytes_to_displacement)
 {
     printf("[");
     PrintRM(instruction_info, mod_registers);
     if (bytes_to_displacement) {
-        s16 displacement = CalculateWord(ch, instruction_index, bytes_to_displacement);
+        s16 displacement = CalculateWord(ch, *instruction_index, bytes_to_displacement);
         PrintDisplacement(displacement);
     }
     printf("], ");
@@ -139,16 +138,16 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
         printf("word ");
 
         int value_offset = bytes_to_displacement + 2;
-        s16 value        = CalculateWord(ch, instruction_index, value_offset);
+        s16 value        = CalculateWord(ch, *instruction_index, value_offset);
         printf("%d", value);
 
-        *bytes_to_next_instruction = 4 + bytes_to_displacement;
+        *instruction_index += 4 + bytes_to_displacement;
 
     } else {
         char *string = (instruction_info.w_bit) ? "word" : "byte";
-        printf("%s %d", string, ch[instruction_index + 2 + bytes_to_displacement]);
+        printf("%s %d", string, ch[*instruction_index + 2 + bytes_to_displacement]);
 
-        *bytes_to_next_instruction = 3 + bytes_to_displacement;
+        *instruction_index += 3 + bytes_to_displacement;
     }
 }
 
@@ -233,8 +232,7 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
 }
 
 void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch, char *reg_registers[2][8],
-                                     int instruction_index, int *bytes_to_next_instruction, s16 *register_map,
-                                     Flags *flags)
+                                     int *instruction_index, s16 *register_map, Flags *flags)
 {
     PrintRM(instruction_info, reg_registers);
     printf(", ");
@@ -242,21 +240,21 @@ void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch
     if(instruction_info.w_bit && !instruction_info.s_bit)
     {
         int value_offset = 2;
-        s16 value        = CalculateWord(ch, instruction_index, value_offset);
+        s16 value        = CalculateWord(ch, *instruction_index, value_offset);
         printf("%d", value);
 
-        *bytes_to_next_instruction = 4;
+        *instruction_index += 4;
 
         //TODO: I'm going to need to create a special simulation function to handle 
         // the different register operations.
         SimulateRegisters(instruction_info, flags, instruction_info.rm, register_map, value);
 
     } else {
-        printf("%d", ch[instruction_index + 2]);
+        printf("%d", ch[*instruction_index + 2]);
 
-        *bytes_to_next_instruction = 3;
+        *instruction_index += 3;
 
-        SimulateRegisters(instruction_info, flags, instruction_info.rm, register_map, ch[instruction_index + 2]);
+        SimulateRegisters(instruction_info, flags, instruction_info.rm, register_map, ch[*instruction_index - 1]);
     }
 }
 
@@ -273,7 +271,7 @@ void PrintRegisterValues(s16 *register_map)
 }
 
 void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instruction_type, char *ch, 
-                       int instruction_index, int *bytes_to_next_instruction, s16 *register_map, Flags *flags)
+                       int *instruction_index, s16 *register_map, Flags *flags)
 {
     if (instruction_info.has_second_instruction_byte) {
         Mod_Type mod_type = CheckMod(instruction_info);
@@ -286,38 +284,35 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 if (instruction_info.rm == 0b110) {
                     if (instruction_info.is_immediate) {
                         PrintImmediateMemModeOperations(instruction_info, ch, mod_registers, 
-                                                        instruction_index, 2, 
-                                                        bytes_to_next_instruction);
+                                                        instruction_index, 2);
 
                     } else {
                         int bytes_to_value = 2;
-                        s16 value = CalculateWord(ch, instruction_index, bytes_to_value);
+                        s16 value = CalculateWord(ch, *instruction_index, bytes_to_value);
                         PrintRegister(instruction_info, reg_registers);
                         printf(", [");
                         printf("%d", value);
                         printf("]");
 
-                        *bytes_to_next_instruction = 4;
+                        *instruction_index += 4;
                     }
 
                 } else if (instruction_info.is_immediate) {
-                    PrintImmediateMemModeOperations(instruction_info, ch, mod_registers, 
-                                                    instruction_index, 0, 
-                                                    bytes_to_next_instruction);
+                    PrintImmediateMemModeOperations(instruction_info, ch, mod_registers, instruction_index, 0);
 
                 } else {
                     PrintMemModeOperations(instruction_info, reg_registers, mod_registers, 0);
 
-                    *bytes_to_next_instruction = 2;
+                    *instruction_index += 2;
                 }
             } break;
 
             case Mod_MemModeDisp8: {
                 int bytes_to_displacement = 2;
-                s16 displacement = ch[instruction_index + bytes_to_displacement];
+                s16 displacement = ch[*instruction_index + bytes_to_displacement];
                 PrintMemModeOperations(instruction_info, reg_registers, mod_registers, displacement);
 
-                *bytes_to_next_instruction = 3;
+                *instruction_index += 3;
             } break; 
 
             case Mod_MemModeDisp16: {
@@ -325,15 +320,14 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
 
                 if (instruction_info.is_immediate) {
                     PrintImmediateMemModeOperations(instruction_info, ch, mod_registers, 
-                                                    instruction_index, bytes_to_displacement,
-                                                    bytes_to_next_instruction);
+                                                    instruction_index, bytes_to_displacement);
 
                 } else {
 
-                    s16 displacement = CalculateWord(ch, instruction_index, bytes_to_displacement);
+                    s16 displacement = CalculateWord(ch, *instruction_index, bytes_to_displacement);
                     PrintMemModeOperations(instruction_info, reg_registers, mod_registers, displacement);
 
-                    *bytes_to_next_instruction = 4;
+                    *instruction_index += 4;
                 }
             } break;
 
@@ -344,6 +338,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                         printf(", ");
                         PrintRM(instruction_info, reg_registers);
 
+                        *instruction_index += 2;
                         SimulateRegisters(instruction_info, flags, instruction_info.reg, register_map, 
                                           register_map[instruction_info.rm]);
 
@@ -353,16 +348,16 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                         if(!instruction_info.is_immediate) {
                             PrintRegister(instruction_info, reg_registers);
 
+                            *instruction_index += 2;
                             SimulateRegisters(instruction_info, flags, instruction_info.rm, register_map,
                                               register_map[instruction_info.reg]);
                         }
                     }
 
-                    *bytes_to_next_instruction = 2;
 
                 } else {
                     PrintImmediateRegModeOperations(instruction_info, ch, reg_registers, instruction_index, 
-                                                    bytes_to_next_instruction, register_map, flags);
+                                                    register_map, flags);
                 }
             } break;  
 
@@ -385,12 +380,12 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 s16 data = 0;
                 if (instruction_info.w_bit) {
                     int data_offset = 1;
-                    data = CalculateWord(ch, instruction_index, data_offset);
-                    *bytes_to_next_instruction = 3;
+                    data = CalculateWord(ch, *instruction_index, data_offset);
+                    *instruction_index += 3;
 
                 } else {
-                    data = ch[instruction_index + 1];
-                    *bytes_to_next_instruction = 2;
+                    data = ch[*instruction_index + 1];
+                    *instruction_index += 2;
                 }
 
 
@@ -411,12 +406,12 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
 
                 if (instruction_info.w_bit) {
                     int data_offset = 1;
-                    data = CalculateWord(ch, instruction_index, data_offset);
-                    *bytes_to_next_instruction = 3;
+                    data = CalculateWord(ch, *instruction_index, data_offset);
+                    *instruction_index += 3;
 
                 } else {
-                    data = ch[instruction_index + 1];
-                    *bytes_to_next_instruction = 2;
+                    data = ch[*instruction_index + 1];
+                    *instruction_index += 2;
                 }
 
                 if (!instruction_info.is_immediate) {
@@ -432,12 +427,12 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 s16 data = 0;
                 if (instruction_info.w_bit) {
                     int data_offset = 1;
-                    data = CalculateWord(ch, instruction_index, data_offset);
-                    *bytes_to_next_instruction = 3;
+                    data = CalculateWord(ch, *instruction_index, data_offset);
+                    *instruction_index += 3;
 
                 } else {
-                    data = ch[instruction_index + 1];
-                    *bytes_to_next_instruction = 2;
+                    data = ch[*instruction_index + 1];
+                    *instruction_index += 2;
                 }
 
                 if (!instruction_info.is_immediate) {
@@ -471,8 +466,8 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
             case InstructionType_LoopNZ:
             case InstructionType_JmpJCXZ:
             {
-                printf("%d", ch[instruction_index+1]);
-                *bytes_to_next_instruction = 2;
+                printf("%d", ch[*instruction_index+1]);
+                *instruction_index += 2;
             } break;
 
             default:

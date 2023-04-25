@@ -46,8 +46,12 @@ int main() {
     file = fopen("challenge_flags", "rb");
 #endif
 
-#if 1 
+#if 0 
     file = fopen("ip_register", "rb");
+#endif
+
+#if 1 
+    file = fopen("conditional_jump", "rb");
 #endif
 
     printf("The assembly instructions of this file is: \n");
@@ -108,9 +112,7 @@ int main() {
 
         PrintInstructionType(instruction_info);
 
-        DecodeInstruction(instruction_info, instruction_type, ch, instruction_index, 
-                          &bytes_to_next_instruction, register_map, &flags);
-        instruction_index += bytes_to_next_instruction;
+        DecodeInstruction(instruction_info, instruction_type, ch, &instruction_index, register_map, &flags);
 
         printf(" FLAGS --> "); 
         for(int i = 0; i < 9; i++) {
@@ -121,4 +123,5 @@ int main() {
 
     printf("\n");
     PrintRegisterValues(register_map);
+    printf("IP = %d\n", instruction_index);
 }
