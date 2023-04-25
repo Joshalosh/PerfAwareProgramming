@@ -42,7 +42,7 @@ int main() {
     file = fopen("add_sub_cmp_sim", "rb");
 #endif
 
-#if 0 
+#if 1 
     file = fopen("challenge_flags", "rb");
 #endif
 
@@ -50,7 +50,7 @@ int main() {
     file = fopen("ip_register", "rb");
 #endif
 
-#if 1 
+#if 0 
     file = fopen("conditional_jump", "rb");
 #endif
 
@@ -118,7 +118,7 @@ int main() {
         for(int i = 0; i < 9; i++) {
             printf("%d ", flags.flag_array[i]);
         }
-        printf("\n");
+        printf("IP = %d\n", instruction_index);
     }
 
     printf("\n");

@@ -145,7 +145,7 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
 
     } else {
         char *string = (instruction_info.w_bit) ? "word" : "byte";
-        printf("%s %d", string, ch[*instruction_index + 2 + bytes_to_displacement]);
+        printf("%s %d", string, ch[(*instruction_index) + 2 + bytes_to_displacement]);
 
         *instruction_index += 3 + bytes_to_displacement;
     }
@@ -191,15 +191,22 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
         if(new_reg_value & (1 << 16)) {
             flags->sign = 1;
         }
-        if(new_reg_value % 2 == 0)
-        {
-            flags->parity = 1;
-        }
         if((register_map[reg_type] & (1 << 16)) == (sub_value & (1 << 16)) &&
            (register_map[reg_type] & (1 << 16)) != (new_reg_value & (1 << 16)) &&
            (sub_value & (1 << 16)) != (new_reg_value & (1 << 16)))
         {
            flags->overflow = 1;
+        }
+
+        int parity_count = 0;
+        for(int i = 0; i < 16; i++)
+        {
+            if (new_reg_value & (1 << i)) {
+                parity_count++;
+            }
+        }
+        if (parity_count % 2 == 0) {
+            flags->parity = 1;
         }
 
         flags->carry = instruction_info.arithmetic_type == ArithType_Sub ? 
@@ -250,11 +257,12 @@ void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch
         SimulateRegisters(instruction_info, flags, instruction_info.rm, register_map, value);
 
     } else {
-        printf("%d", ch[*instruction_index + 2]);
+        printf("%d", ch[(*instruction_index) + 2]);
 
         *instruction_index += 3;
 
-        SimulateRegisters(instruction_info, flags, instruction_info.rm, register_map, ch[*instruction_index - 1]);
+        SimulateRegisters(instruction_info, flags, instruction_info.rm, 
+                          register_map, ch[(*instruction_index) - 1]);
     }
 }
 
@@ -309,7 +317,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
 
             case Mod_MemModeDisp8: {
                 int bytes_to_displacement = 2;
-                s16 displacement = ch[*instruction_index + bytes_to_displacement];
+                s16 displacement = ch[(*instruction_index) + bytes_to_displacement];
                 PrintMemModeOperations(instruction_info, reg_registers, mod_registers, displacement);
 
                 *instruction_index += 3;
@@ -384,7 +392,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                     *instruction_index += 3;
 
                 } else {
-                    data = ch[*instruction_index + 1];
+                    data = ch[(*instruction_index) + 1];
                     *instruction_index += 2;
                 }
 
@@ -410,7 +418,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                     *instruction_index += 3;
 
                 } else {
-                    data = ch[*instruction_index + 1];
+                    data = ch[(*instruction_index) + 1];
                     *instruction_index += 2;
                 }
 
@@ -431,7 +439,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                     *instruction_index += 3;
 
                 } else {
-                    data = ch[*instruction_index + 1];
+                    data = ch[(*instruction_index) + 1];
                     *instruction_index += 2;
                 }
 
@@ -445,6 +453,17 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 PrintRegister(instruction_info, reg_registers);
             }break;
 
+            case InstructionType_JmpJNE:
+            {
+                printf("%d", ch[*instruction_index+1]+2);
+                if (!flags->zero) {
+                    *instruction_index += ch[(*instruction_index)+1];
+                    *instruction_index += 2;
+
+                } else {
+                    *instruction_index += 2;
+                }
+            } break;
             case InstructionType_JmpJE:
             case InstructionType_JmpJL:
             case InstructionType_JmpJLE:
@@ -453,7 +472,6 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
             case InstructionType_JmpJP:
             case InstructionType_JmpJO:
             case InstructionType_JmpJS:
-            case InstructionType_JmpJNE:
             case InstructionType_JmpJNL:
             case InstructionType_JmpJNLE:
             case InstructionType_JmpJNB:
@@ -466,7 +484,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
             case InstructionType_LoopNZ:
             case InstructionType_JmpJCXZ:
             {
-                printf("%d", ch[*instruction_index+1]);
+                printf("%d", ch[(*instruction_index)+1]);
                 *instruction_index += 2;
             } break;
 
