@@ -199,7 +199,7 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
         }
 
         int parity_count = 0;
-        for(int i = 0; i < 16; i++)
+        for(int i = 0; i < 8; i++)
         {
             if (new_reg_value & (1 << i)) {
                 parity_count++;
