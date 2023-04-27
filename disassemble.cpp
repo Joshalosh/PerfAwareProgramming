@@ -42,7 +42,7 @@ int main() {
     file = fopen("add_sub_cmp_sim", "rb");
 #endif
 
-#if 1 
+#if 0 
     file = fopen("challenge_flags", "rb");
 #endif
 
@@ -52,6 +52,10 @@ int main() {
 
 #if 0 
     file = fopen("conditional_jump", "rb");
+#endif
+
+#if 1 
+    file = fopen("challenge_jump", "rb");
 #endif
 
     printf("The assembly instructions of this file is: \n");

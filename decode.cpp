@@ -465,11 +465,31 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 }
             } break;
             case InstructionType_JmpJE:
+            {
+                printf("%d", ch[*instruction_index+1]+2);
+                if (flags->zero) {
+                    *instruction_index += ch[(*instruction_index)+1];
+                    *instruction_index += 2;
+
+                } else {
+                    *instruction_index += 2;
+                }
+            } break;
+            case InstructionType_JmpJP:
+            {
+                printf("%d", ch[*instruction_index+1]+2);
+                if (flags->parity) {
+                    *instruction_index += ch[(*instruction_index)+1];
+                    *instruction_index += 2;
+
+                } else {
+                    *instruction_index += 2;
+                }
+            } break;
             case InstructionType_JmpJL:
             case InstructionType_JmpJLE:
             case InstructionType_JmpJB:
             case InstructionType_JmpJBE:
-            case InstructionType_JmpJP:
             case InstructionType_JmpJO:
             case InstructionType_JmpJS:
             case InstructionType_JmpJNL:
