@@ -188,12 +188,12 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
         if(new_reg_value == 0) {
             flags->zero = 1;
         }
-        if(new_reg_value & (1 << 16)) {
+        if(new_reg_value & (1 << 15)) {
             flags->sign = 1;
         }
-        if((register_map[reg_type] & (1 << 16)) == (sub_value & (1 << 16)) &&
-           (register_map[reg_type] & (1 << 16)) != (new_reg_value & (1 << 16)) &&
-           (sub_value & (1 << 16)) != (new_reg_value & (1 << 16)))
+        if((register_map[reg_type] & 0x8000) == (sub_value & 0x8000) &&
+           (register_map[reg_type] & 0x8000) != (new_reg_value & 0x8000) &&
+           (sub_value & 0x8000) != (new_reg_value & 0x8000))
         {
            flags->overflow = 1;
         }
@@ -226,9 +226,11 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
         // just a little test for negative bit operations.
         if (1)
         {
-            s16 num = 30000;
-            s16 new_num = num + 10000;
-            bool truth = num < new_num;
+            u8 one;
+            u8 two;
+            u16 max = 0xffff; 
+            u16 test = 0x432B; 
+            u16 hi_bit = 0x8000;
         }
     }
 
