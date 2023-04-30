@@ -195,20 +195,91 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
                            new_reg_hi_nibble > old_reg_hi_nibble : 
                            new_reg_lo_nibble < old_reg_lo_nibble;
 
-        // just a little test for negative bit operations.
-        if (1)
-        {
-            u8 one;
-            u8 two;
-            u16 max = 0xffff; 
-            u16 test = 0x432B; 
-            u16 hi_bit = 0x8000;
-        }
     }
 
     if(instruction_info.arithmetic_type != ArithType_Cmp)
     {
         register_map[reg_type] = new_reg_value;
+    }
+}
+
+void SimulateRegistersAndMemory(Instruction_Info instruction_info, Flags *flags, s16 *register_map, 
+                                u8 *memory, s16 value, s16 displacement)
+{
+    s16 new_mem_value = 0;
+    s16 sub_value = value;
+    switch (instruction_info.arithmetic_type) {
+        case ArithType_None: 
+        {
+            new_mem_value = value;
+        } break;
+
+        case ArithType_Add:
+        {
+            new_mem_value = register_map[reg_type] + value;
+        } break;
+
+        case ArithType_Cmp:
+        case ArithType_Sub:
+        {
+            sub_value = ~value + 1;
+            new_mem_value  = register_map[reg_type] + sub_value;
+        } break;
+
+        default:
+        {
+            printf("Something has gone real bad boo boo baby");
+        } break;
+    }
+
+    if(instruction_info.is_arithmetic) {
+        for(int index = 0; index < ARRAY_COUNT(flags->flag_array); index++) {
+            flags->flag_array[index] = 0;
+        }
+
+        if(new_mem_value == 0) {
+            flags->zero = 1;
+        }
+        if(new_mem_value & (1 << 15)) {
+            flags->sign = 1;
+        }
+        if((register_map[reg_type] & 0x8000) == (sub_value & 0x8000) &&
+           (register_map[reg_type] & 0x8000) != (new_mem_value & 0x8000) &&
+           (sub_value & 0x8000) != (new_mem_value & 0x8000))
+        {
+           flags->overflow = 1;
+        }
+
+        int parity_count = 0;
+        for(int i = 0; i < 8; i++)
+        {
+            if (new_mem_value & (1 << i)) {
+                parity_count++;
+            }
+        }
+        if (parity_count % 2 == 0) {
+            flags->parity = 1;
+        }
+
+        flags->carry = instruction_info.arithmetic_type == ArithType_Sub ? 
+                       (u16)new_mem_value > (u16)register_map[reg_type] : 
+                       (u16)new_mem_value < (u16)register_map[reg_type];
+
+        //Auxiliary carry checking.
+        u8 new_reg_lo_nibble = new_mem_value & 0b0000'1111;
+        u8 new_reg_hi_nibble = new_mem_value & 0b1111'0000;
+        u8 old_reg_lo_nibble = register_map[reg_type] & 0b0000'1111;
+        u8 old_reg_hi_nibble = register_map[reg_type] & 0b1111'0000;
+
+        flags->aux_carry = instruction_info.arithmetic_type == ArithType_Sub ? 
+                           new_reg_hi_nibble > old_reg_hi_nibble : 
+                           new_reg_lo_nibble < old_reg_lo_nibble;
+
+    }
+
+    if(instruction_info.arithmetic_type != ArithType_Cmp)
+    {
+        register_map[reg_type] = new_mem_value;
     }
 }
 
