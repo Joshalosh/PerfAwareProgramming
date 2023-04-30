@@ -84,6 +84,7 @@ int main() {
 
     s16 register_map[8] = {};
     Flags flags = {};
+    u8 memory[0xFFFF] = {};
     while (instruction_index < file_size) {
 
         // This is a long process for deciding what the instruction type is going

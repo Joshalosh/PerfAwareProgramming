@@ -123,34 +123,6 @@ void PrintMemModeOperations(Instruction_Info instruction_info, char *reg_registe
     }
 }
 
-void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch, char *mod_registers[8],
-                                     int *instruction_index, s16 bytes_to_displacement)
-{
-    printf("[");
-    PrintRM(instruction_info, mod_registers);
-    if (bytes_to_displacement) {
-        s16 displacement = CalculateWord(ch, *instruction_index, bytes_to_displacement);
-        PrintDisplacement(displacement);
-    }
-    printf("], ");
-
-    if (instruction_info.w_bit && !instruction_info.s_bit) {
-        printf("word ");
-
-        int value_offset = bytes_to_displacement + 2;
-        s16 value        = CalculateWord(ch, *instruction_index, value_offset);
-        printf("%d", value);
-
-        *instruction_index += 4 + bytes_to_displacement;
-
-    } else {
-        char *string = (instruction_info.w_bit) ? "word" : "byte";
-        printf("%s %d", string, ch[(*instruction_index) + 2 + bytes_to_displacement]);
-
-        *instruction_index += 3 + bytes_to_displacement;
-    }
-}
-
 void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_type, 
                        s16 *register_map, s16 value)
 {
@@ -237,6 +209,34 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
     if(instruction_info.arithmetic_type != ArithType_Cmp)
     {
         register_map[reg_type] = new_reg_value;
+    }
+}
+
+void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch, char *mod_registers[8],
+                                     int *instruction_index, s16 bytes_to_displacement)
+{
+    printf("[");
+    PrintRM(instruction_info, mod_registers);
+    if (bytes_to_displacement) {
+        s16 displacement = CalculateWord(ch, *instruction_index, bytes_to_displacement);
+        PrintDisplacement(displacement);
+    }
+    printf("], ");
+
+    if (instruction_info.w_bit && !instruction_info.s_bit) {
+        printf("word ");
+
+        int value_offset = bytes_to_displacement + 2;
+        s16 value        = CalculateWord(ch, *instruction_index, value_offset);
+        printf("%d", value);
+
+        *instruction_index += 4 + bytes_to_displacement;
+
+    } else {
+        char *string = (instruction_info.w_bit) ? "word" : "byte";
+        printf("%s %d", string, ch[(*instruction_index) + 2 + bytes_to_displacement]);
+
+        *instruction_index += 3 + bytes_to_displacement;
     }
 }
 
