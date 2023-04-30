@@ -203,6 +203,7 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
     }
 }
 
+#if 0
 void SimulateRegistersAndMemory(Instruction_Info instruction_info, Flags *flags, s16 *register_map, 
                                 u8 *memory, s16 value, s16 displacement)
 {
@@ -282,14 +283,47 @@ void SimulateRegistersAndMemory(Instruction_Info instruction_info, Flags *flags,
         register_map[reg_type] = new_mem_value;
     }
 }
+#endif
 
 void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch, char *mod_registers[8],
                                      int *instruction_index, s16 bytes_to_displacement)
 {
     printf("[");
-    PrintRM(instruction_info, mod_registers);
+    if (instruction_info.rm != 6) {
+        PrintRM(instruction_info, mod_registers);
+    }
     if (bytes_to_displacement) {
         s16 displacement = CalculateWord(ch, *instruction_index, bytes_to_displacement);
+        PrintDisplacement(displacement);
+    }
+    printf("], ");
+
+    if (instruction_info.w_bit && !instruction_info.s_bit) {
+        printf("word ");
+
+        int value_offset = bytes_to_displacement + 2;
+        s16 value        = CalculateWord(ch, *instruction_index, value_offset);
+        printf("%d", value);
+
+        *instruction_index += 4 + bytes_to_displacement;
+
+    } else {
+        char *string = (instruction_info.w_bit) ? "word" : "byte";
+        printf("%s %d", string, ch[(*instruction_index) + 2 + bytes_to_displacement]);
+
+        *instruction_index += 3 + bytes_to_displacement;
+    }
+}
+
+void PrintImmediateMemModeOperations8(Instruction_Info instruction_info, char *ch, char *mod_registers[8],
+                                        int *instruction_index, s8 bytes_to_displacement)
+{
+    printf("[");
+    if (instruction_info.rm != 6) {
+        PrintRM(instruction_info, mod_registers);
+    }
+    if (bytes_to_displacement) {
+        s16 displacement = ch[*instruction_index + bytes_to_displacement];
         PrintDisplacement(displacement);
     }
     printf("], ");
@@ -389,11 +423,18 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
             } break;
 
             case Mod_MemModeDisp8: {
-                int bytes_to_displacement = 2;
-                s16 displacement = ch[(*instruction_index) + bytes_to_displacement];
-                PrintMemModeOperations(instruction_info, reg_registers, mod_registers, displacement);
+                if (instruction_info.is_immediate) {
+                    PrintImmediateMemModeOperations(instruction_info, ch, mod_registers,
+                                                    instruction_index, 2);
+                                                    
 
-                *instruction_index += 3;
+                } else {
+                    int bytes_to_displacement = 2;
+                    s16 displacement = ch[(*instruction_index) + bytes_to_displacement];
+                    PrintMemModeOperations(instruction_info, reg_registers, mod_registers, displacement);
+
+                    *instruction_index += 3;
+                }
             } break; 
 
             case Mod_MemModeDisp16: {
