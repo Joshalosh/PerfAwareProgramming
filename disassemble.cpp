@@ -54,8 +54,16 @@ int main() {
     file = fopen("conditional_jump", "rb");
 #endif
 
-#if 1 
+#if 0 
     file = fopen("challenge_jump", "rb");
+#endif
+
+#if 1 
+    file = fopen("memory_mov", "rb");
+#endif
+
+#if 0 
+    file = fopen("memory_add_loop", "rb");
 #endif
 
     printf("The assembly instructions of this file is: \n");
