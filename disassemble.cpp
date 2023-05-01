@@ -125,7 +125,8 @@ int main() {
 
         PrintInstructionType(instruction_info);
 
-        DecodeInstruction(instruction_info, instruction_type, ch, &instruction_index, register_map, &flags);
+        DecodeInstruction(instruction_info, instruction_type, ch, &instruction_index, 
+                          register_map, &memory, &flags);
 
         printf(" FLAGS --> "); 
         for(int i = 0; i < 9; i++) {
