@@ -33,6 +33,8 @@ void PrintInstructionType(Instruction_Info instruction_info)
 char *reg_registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"}, 
                              {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"}};
 
+// I need to figure out a way to map these registers 
+// to the actual register array.
 char *mod_registers[8] = {"bx + si", "bx + di", "bp + si", "bp + di", "si", "di", "bp", "bx"};
 
 
@@ -321,18 +323,22 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
 }
 
 void PrintImmediateMemModeOperations8(Instruction_Info instruction_info, char *ch, char *mod_registers[8],
-                                        int *instruction_index, s8 bytes_to_displacement)
+                                        int *instruction_index, s8 bytes_to_displacement,
+                                        s16 *register_map, u8 *memory, Flags *flags)
 {
+    s16 displacement = 0;
     printf("[");
     if (instruction_info.rm != 6) {
         PrintRM(instruction_info, mod_registers);
     }
     if (bytes_to_displacement) {
-        s16 displacement = ch[*instruction_index + bytes_to_displacement];
+        displacement = ch[*instruction_index + bytes_to_displacement];
         PrintDisplacement(displacement);
     }
     printf("], ");
 
+    s16 memory_index = instruction_info.rm != 6 ? 
+        register_map[instruction_info.rm] + displacement : displacement;
     if (instruction_info.w_bit && !instruction_info.s_bit) {
         printf("word ");
 
@@ -341,13 +347,16 @@ void PrintImmediateMemModeOperations8(Instruction_Info instruction_info, char *c
         printf("%d", value);
 
         *instruction_index += 3 + bytes_to_displacement;
+        SimulateMemory(instruction_info, flags, memory, value, memory_index); 
 
     } else {
         char *string = (instruction_info.w_bit) ? "word" : "byte";
         s8 bytes_to_value = bytes_to_displacement + 1;
-        printf("%s %d", string, ch[(*instruction_index) + bytes_to_value]);
+        s8 value = ch[(*instruction_index) + bytes_to_value];
+        printf("%s %d", string, value);
 
         *instruction_index += 2 + bytes_to_displacement;
+        SimulateMemory(instruction_info, flags, memory, value, memory_index); 
     }
 }
 
@@ -416,6 +425,8 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                         printf("]");
 
                         *instruction_index += 4;
+                        SimulateRegisters(instruction_info, flags, instruction_info.reg, 
+                                          register_map, memory[value]);
                     }
 
                 } else if (instruction_info.is_immediate) {
@@ -432,7 +443,8 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
             case Mod_MemModeDisp8: {
                 if (instruction_info.is_immediate) {
                     PrintImmediateMemModeOperations8(instruction_info, ch, mod_registers,
-                                                     instruction_index, 2);
+                                                     instruction_index, 2, register_map, 
+                                                     memory, flags);
                                                     
 
                 } else {
