@@ -37,6 +37,12 @@ char *reg_registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"},
 // to the actual register array.
 char *mod_registers[8] = {"bx + si", "bx + di", "bp + si", "bp + di", "si", "di", "bp", "bx"};
 
+// This mapping takes the instruction_info.rm as an index and the value at that
+// index has the two corresponding register indexes needed for the register map.
+// it requires masking to extract as the bottom 4 bits contain one index, and the 
+// high 4 bits contains the second. If there is no second register required the top
+// 4 bits remain zero. With this you can extract the indexes and feed them into 
+// the register_map to gain access to the correct register values.
 u8 mem_map[8] = {0x63, 0x73, 0x65, 0x75, 0x06, 0x07, 0x05, 0x03};    
 
 Mod_Type CheckMod(Instruction_Info instruction_info)
