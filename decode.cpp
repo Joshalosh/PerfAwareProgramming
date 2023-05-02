@@ -37,6 +37,7 @@ char *reg_registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"},
 // to the actual register array.
 char *mod_registers[8] = {"bx + si", "bx + di", "bp + si", "bp + di", "si", "di", "bp", "bx"};
 
+u8 *mem_map = {0x63, 0x73, 0x65, 0x75, 0x06, 0x07, 0x05, 0x03};    
 
 Mod_Type CheckMod(Instruction_Info instruction_info)
 {
