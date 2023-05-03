@@ -298,14 +298,16 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
                                      Flags *flags, u8 *mem_map, s16 *register_map)
 {
     s16 immediate_displacement = 0;
-    s16 reg_displacement = 0;
-    u8 reg_index_mask = 0xF;
-    u8 reg_index = mem_map[instruction_info.rm] & reg_index_mask;
-    u8 second_reg_index = mem_map[instruction_info.rm] & (reg_index_mask << 4);
+    s16 reg_displacement       = 0;
+
+    u8 reg_a_mask              = 0x0F;
+    u8 reg_b_mask              = 0xF0;
+    u8 reg_a_index             = (mem_map[instruction_info.rm] & reg_a_mask) >> 0;
+    u8 reg_b_index             = (mem_map[instruction_info.rm] & reg_b_mask) >> 4;
     
-    reg_displacement = second_reg_index ? 
-                       register_map[reg_index] + register_map[second_reg_index] :
-                       register_map[reg_index];
+    reg_displacement = reg_b_index ? 
+                       register_map[reg_a_index] + register_map[reg_b_index] :
+                       register_map[reg_a_index];
 
     s16 displacement = 0;
     printf("[");
