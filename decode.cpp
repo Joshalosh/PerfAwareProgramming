@@ -87,7 +87,7 @@ void PrintRM(Instruction_Info instruction_info, char *registers[2][8])
 }
 
 
-void PrintDisplacement(s16 value)
+void PrintRegDisplacement(s16 value)
 {
     if (value == 0) {
         // Do nothing.
@@ -120,13 +120,13 @@ void PrintMemModeOperations(Instruction_Info instruction_info, char *reg_registe
         PrintRegister(instruction_info, reg_registers);
         printf(", [");
         PrintRM(instruction_info, mod_registers);
-        PrintDisplacement(displacement);
+        PrintRegDisplacement(displacement);
         printf("]");
 
     } else {
         printf("[");
         PrintRM(instruction_info, mod_registers);
-        PrintDisplacement(displacement);
+        PrintRegDisplacement(displacement);
         printf("], ");
         PrintRegister(instruction_info, reg_registers);
     }
@@ -297,6 +297,8 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
                                      int *instruction_index, s16 bytes_to_displacement, u8 *memory, 
                                      Flags *flags, s16 *register_map)
 {
+    // This is all for mapping the rm bits into the right register 
+    // from the mem_map.
     s16 immediate_displacement = 0;
     s16 reg_displacement       = 0;
 
@@ -316,19 +318,27 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
         displacement = reg_displacement;
     }
 
+    // Need to check if the displacement spans 1 byte or 2. 
+    // That will effect the calculations of the rest of the instructions.
     Mod_Type mod_type = CheckMod(instruction_info);
     u8 bytes_to_value = mod_type == Mod_MemModeDisp8 ? 1 : 2;
 
-    if (bytes_to_displacement && !mod_type == Mod_MemModeDisp8) {
-        immediate_displacement = CalculateWord(ch, *instruction_index, bytes_to_displacement);
-        PrintDisplacement(immediate_displacement);
+    if (bytes_to_displacement) {
+        immediate_displacement = mod_type != Mod_MemModeDisp8 ? 
+                                 CalculateWord(ch, *instruction_index, bytes_to_displacement) :
+                                 ch[*instruction_index + bytes_to_displacement];
 
-    } else if (bytes_to_displacement) {
-        immediate_displacement = ch[*instruction_index + bytes_to_displacement];
-        PrintDisplacement(immediate_displacement);
+        // A different printout will occur if there is a register 
+        if (instruction_info.rm != 6) {
+            PrintRegDisplacement(immediate_displacement);
+
+        } else {
+            printf("%d", immediate_displacement);
+        }
     }
     printf("], ");
 
+    // TODO: This section of code can be condensed down.
     if (instruction_info.w_bit && !instruction_info.s_bit) {
         printf("word ");
 
