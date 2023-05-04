@@ -336,32 +336,25 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
             printf("%d", immediate_displacement);
         }
     }
+    displacement += immediate_displacement;
     printf("], ");
 
-    // TODO: This section of code can be condensed down.
+    int value_offset         = bytes_to_displacement + bytes_to_value;
+    s16 value                = 0;
+    int bytes_to_instruction = 1;
     if (instruction_info.w_bit && !instruction_info.s_bit) {
-        printf("word ");
-
-        int value_offset = bytes_to_displacement + bytes_to_value;
-        s16 value        = CalculateWord(ch, *instruction_index, value_offset);
-        printf("%d", value);
-
-        *instruction_index += 2 + bytes_to_displacement + bytes_to_value;
-
-        displacement += immediate_displacement;
-        SimulateMemory(instruction_info, flags, memory, value, displacement);
+        value               = CalculateWord(ch, *instruction_index, value_offset);
+        bytes_to_instruction++;
 
     } else {
-        char *string = (instruction_info.w_bit) ? "word" : "byte";
-        s8 value_offset = bytes_to_displacement + bytes_to_value;
-        s16 value    = ch[(*instruction_index) + value_offset];
-        printf("%s %d", string, value);
-
-        *instruction_index += 1 + bytes_to_displacement + bytes_to_value;
-
-        displacement += immediate_displacement;
-        SimulateMemory(instruction_info, flags, memory, value, displacement);
+        value = ch[(*instruction_index) + value_offset];
     }
+
+    char *string = (instruction_info.w_bit) ? "word" : "byte";
+    printf("%s %d", string, value);
+
+    *instruction_index += bytes_to_instruction + bytes_to_displacement + bytes_to_value;
+    SimulateMemory(instruction_info, flags, memory, value, displacement);
 }
 
 void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch, char *reg_registers[2][8],
