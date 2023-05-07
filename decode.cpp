@@ -347,6 +347,8 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
 void PrintMemModeOperations(Instruction_Info instruction_info, u8 *memory, 
                             s16 *register_map, Flags *flags, s16 displacement)
 {
+    s16 mem_address = GetMemAddress(instruction_info, register_map);
+
     if (instruction_info.d_bit) {
         PrintRegister(instruction_info, reg_registers);
         printf(", [");
@@ -354,7 +356,6 @@ void PrintMemModeOperations(Instruction_Info instruction_info, u8 *memory,
         PrintRegDisplacement(displacement);
         printf("]");
 
-        s16 mem_address = GetMemAddress(instruction_info, register_map);
         SimulateRegisters(instruction_info, flags, instruction_info.reg, 
                           register_map, memory[mem_address]);
 
@@ -365,7 +366,6 @@ void PrintMemModeOperations(Instruction_Info instruction_info, u8 *memory,
         printf("], ");
         PrintRegister(instruction_info, reg_registers);
 
-        s16 mem_address = GetMemAddress(instruction_info, register_map);
         SimulateMemory(instruction_info, flags, memory, register_map[instruction_info.reg], 
                        mem_address);  
     }
