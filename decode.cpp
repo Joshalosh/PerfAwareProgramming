@@ -113,25 +113,6 @@ s16 CalculateWord(char *ch, int instruction_index, int offset)
     return result;
 }
 
-void PrintMemModeOperations(Instruction_Info instruction_info, char *reg_registers[2][8], 
-                            char *mod_registers[8], s16 displacement)
-{
-    if (instruction_info.d_bit) {
-        PrintRegister(instruction_info, reg_registers);
-        printf(", [");
-        PrintRM(instruction_info, mod_registers);
-        PrintRegDisplacement(displacement);
-        printf("]");
-
-    } else {
-        printf("[");
-        PrintRM(instruction_info, mod_registers);
-        PrintRegDisplacement(displacement);
-        printf("], ");
-        PrintRegister(instruction_info, reg_registers);
-    }
-}
-
 void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_type, 
                        s16 *register_map, s16 value)
 {
@@ -293,6 +274,22 @@ void SimulateMemory(Instruction_Info instruction_info, Flags *flags, u8 *memory,
 }
 #endif
 
+s16 GetMemAddress(Instruction_Info instruction_info, s16 *register_map)
+{
+    s16 result     = 0;
+
+    u8 reg_a_mask  = 0x0F;
+    u8 reg_b_mask  = 0xF0;
+    u8 reg_a_index = (mem_map[instruction_info.rm] & reg_a_mask) >> 0;
+    u8 reg_b_index = (mem_map[instruction_info.rm] & reg_b_mask) >> 4;
+    
+    result = reg_b_index ? 
+             register_map[reg_a_index] + register_map[reg_b_index] : 
+             register_map[reg_a_index];
+
+    return result;
+}
+
 void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch,
                                      int *instruction_index, s16 bytes_to_displacement, u8 *memory, 
                                      Flags *flags, s16 *register_map)
@@ -300,17 +297,7 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
     // This is all for mapping the rm bits into the right register 
     // from the mem_map.
     s16 immediate_displacement = 0;
-    s16 reg_displacement       = 0;
-
-    u8 reg_a_mask              = 0x0F;
-    u8 reg_b_mask              = 0xF0;
-    u8 reg_a_index             = (mem_map[instruction_info.rm] & reg_a_mask) >> 0;
-    u8 reg_b_index             = (mem_map[instruction_info.rm] & reg_b_mask) >> 4;
-    
-    reg_displacement = reg_b_index ? 
-                       register_map[reg_a_index] + register_map[reg_b_index] :
-                       register_map[reg_a_index];
-
+    s16 reg_displacement = GetMemAddress(instruction_info, register_map);
     s16 displacement = 0;
     printf("[");
     if (instruction_info.rm != 6) {
@@ -355,6 +342,33 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
 
     *instruction_index += bytes_to_instruction + bytes_to_displacement + bytes_to_value;
     SimulateMemory(instruction_info, flags, memory, value, displacement);
+}
+
+void PrintMemModeOperations(Instruction_Info instruction_info, u8 *memory, 
+                            s16 *register_map, Flags *flags, s16 displacement)
+{
+    if (instruction_info.d_bit) {
+        PrintRegister(instruction_info, reg_registers);
+        printf(", [");
+        PrintRM(instruction_info, mod_registers);
+        PrintRegDisplacement(displacement);
+        printf("]");
+
+        s16 mem_address = GetMemAddress(instruction_info, register_map);
+        SimulateRegisters(instruction_info, flags, instruction_info.reg, 
+                          register_map, memory[mem_address]);
+
+    } else {
+        printf("[");
+        PrintRM(instruction_info, mod_registers);
+        PrintRegDisplacement(displacement);
+        printf("], ");
+        PrintRegister(instruction_info, reg_registers);
+
+        s16 mem_address = GetMemAddress(instruction_info, register_map);
+        SimulateMemory(instruction_info, flags, memory, register_map[instruction_info.reg], 
+                       mem_address);  
+    }
 }
 
 void PrintImmediateRegModeOperations(Instruction_Info instruction_info, char *ch, char *reg_registers[2][8],
@@ -432,7 +446,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                                                     memory, flags, register_map);
 
                 } else {
-                    PrintMemModeOperations(instruction_info, reg_registers, mod_registers, 0);
+                    PrintMemModeOperations(instruction_info, memory, register_map, flags, 0);
 
                     *instruction_index += 2;
                 }
@@ -448,7 +462,8 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 } else {
                     int bytes_to_displacement = 2;
                     s16 displacement = ch[(*instruction_index) + bytes_to_displacement];
-                    PrintMemModeOperations(instruction_info, reg_registers, mod_registers, displacement);
+                    PrintMemModeOperations(instruction_info, memory, register_map, 
+                                           flags, displacement);
 
                     *instruction_index += 3;
                 }
@@ -465,7 +480,8 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 } else {
 
                     s16 displacement = CalculateWord(ch, *instruction_index, bytes_to_displacement);
-                    PrintMemModeOperations(instruction_info, reg_registers, mod_registers, displacement);
+                    PrintMemModeOperations(instruction_info, memory, register_map, 
+                                           flags, displacement);
 
                     *instruction_index += 4;
                 }
