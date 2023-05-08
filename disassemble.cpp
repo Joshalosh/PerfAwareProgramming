@@ -66,8 +66,12 @@ int main() {
     file = fopen("memory_add_loop", "rb");
 #endif
 
-#if 1 
+#if 0 
     file = fopen("loop_challenge", "rb");
+#endif
+
+#if 1 
+    file = fopen("draw_image", "rb");
 #endif
 
     printf("The assembly instructions of this file is: \n");
