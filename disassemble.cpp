@@ -146,4 +146,12 @@ int main() {
     printf("\n");
     PrintRegisterValues(register_map);
     printf("IP = %d\n", instruction_index);
+
+    int written = 0;
+    file = fopen("mem_dump.data", "wb");
+    written = fwrite(memory, sizeof(u8), sizeof(memory), file);
+    if (written == 0) {
+        printf("Error during writing to file !");
+    }
+    fclose(file);
 }

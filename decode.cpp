@@ -299,16 +299,19 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
     s16 immediate_displacement = 0;
     s16 reg_displacement = GetMemAddress(instruction_info, register_map);
     s16 displacement = 0;
-    printf("[");
-    if (instruction_info.rm != 6) {
-        PrintRM(instruction_info, mod_registers);
-        displacement = reg_displacement;
-    }
-
+   
     // Need to check if the displacement spans 1 byte or 2. 
     // That will effect the calculations of the rest of the instructions.
     Mod_Type mod_type = CheckMod(instruction_info);
     u8 bytes_to_value = mod_type == Mod_MemModeDisp8 ? 1 : 2;
+
+    printf("[");
+    // TODO: Definitely need to try and clean up this check 
+    // when i'm not feeling sick.
+    if (!(instruction_info.rm == 6 && mod_type == 0)) {
+        PrintRM(instruction_info, mod_registers);
+        displacement = reg_displacement;
+    }
 
     if (bytes_to_displacement) {
         immediate_displacement = mod_type != Mod_MemModeDisp8 ? 
@@ -316,7 +319,9 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *ch
                                  ch[*instruction_index + bytes_to_displacement];
 
         // A different printout will occur if there is a register 
-        if (instruction_info.rm != 6) {
+        // TODO: Definitely need to try and clean up this check 
+        // when i'm not feeling sick.
+        if (!(instruction_info.rm == 6 && mod_type == 0)) {
             PrintRegDisplacement(immediate_displacement);
 
         } else {
