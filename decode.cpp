@@ -153,9 +153,9 @@ void SimulateRegisters(Instruction_Info instruction_info, Flags *flags, u8 reg_t
         if(new_reg_value & (1 << 15)) {
             flags->sign = 1;
         }
-        if((register_map[reg_type] & 0x8000) == (sub_value & 0x8000) &&
+        if((register_map[reg_type] & 0x8000) == (sub_value & 0x8000)     &&
            (register_map[reg_type] & 0x8000) != (new_reg_value & 0x8000) &&
-           (sub_value & 0x8000) != (new_reg_value & 0x8000))
+           (sub_value & 0x8000)              != (new_reg_value & 0x8000))
         {
            flags->overflow = 1;
         }
@@ -335,7 +335,7 @@ void PrintImmediateMemModeOperations(Instruction_Info instruction_info, char *me
     s16 value                = 0;
     int bytes_to_instruction = 1;
     if (instruction_info.w_bit && !instruction_info.s_bit) {
-        value               = CalculateWord(memory, *instruction_index, value_offset);
+        value = CalculateWord(memory, *instruction_index, value_offset);
         bytes_to_instruction++;
 
     } else {
@@ -353,6 +353,7 @@ void PrintMemModeOperations(Instruction_Info instruction_info, char *memory,
                             s16 *register_map, Flags *flags, s16 displacement)
 {
     s16 mem_address = GetMemAddress(instruction_info, register_map);
+    mem_address    += displacement;
 
     if (instruction_info.d_bit) {
         PrintRegister(instruction_info, reg_registers);
