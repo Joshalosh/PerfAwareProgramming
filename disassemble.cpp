@@ -7,7 +7,7 @@
 
 int main() {
     FILE *file;
-    char ch[MAX_BUFFER_SIZE] = {};
+    char memory[MAX_BUFFER_SIZE] = {};
     int file_size = 0;
 
 #if 0
@@ -77,7 +77,7 @@ int main() {
     printf("The assembly instructions of this file is: \n");
 
     if(file != NULL) {
-        fread(ch, sizeof(ch),1,file);
+        fread(memory, sizeof(memory),1,file);
 
         fseek(file, 0, SEEK_END);
         file_size = ftell(file);
@@ -92,7 +92,6 @@ int main() {
 
     s16 register_map[8] = {};
     Flags flags = {};
-    u8 memory[0xFFFF] = {};
     while (instruction_index < file_size) {
 
         // This is a long process for deciding what the instruction type is going
@@ -104,7 +103,7 @@ int main() {
         Instruction_Type instruction_type = InstructionType_Count;
         Type_Bucket types = {};
         for (int index = 0; index < InstructionType_Count; index++) {
-            if ((ch[instruction_index] & instruction_table[index].op_mask) == instruction_table[index].op_bits) {
+            if ((memory[instruction_index] & instruction_table[index].op_mask) == instruction_table[index].op_bits) {
                 types.array[types.size] = (Instruction_Type)index;
                 types.size++;
             }
@@ -116,7 +115,7 @@ int main() {
             {
                 u8 mid_bits_mask = 0b00'111'000; 
                 if (instruction_table[types.array[index]].mid_bits == 
-                    (ch[instruction_index + 1] & mid_bits_mask)) {
+                    (memory[instruction_index + 1] & mid_bits_mask)) {
                     instruction_type = types.array[index];
                     break;
                 }
@@ -129,12 +128,12 @@ int main() {
         int bytes_to_next_instruction = 0;
 
         Instruction_Info instruction_info = {};
-        InitInstructionInfo(&instruction_info, ch, instruction_index, instruction_table, instruction_type);
+        InitInstructionInfo(&instruction_info, memory, instruction_index, instruction_table, instruction_type);
 
         PrintInstructionType(instruction_info);
 
-        DecodeInstruction(instruction_info, instruction_type, ch, &instruction_index, 
-                          register_map, memory, &flags);
+        DecodeInstruction(instruction_info, instruction_type, memory, &instruction_index, 
+                          register_map, &flags);
 
         printf(" FLAGS --> "); 
         for(int i = 0; i < 9; i++) {
@@ -149,7 +148,7 @@ int main() {
 
     int written = 0;
     file = fopen("mem_dump.data", "wb");
-    written = fwrite(memory, sizeof(u8), sizeof(memory), file);
+    written = fwrite(memory, sizeof(char), sizeof(memory), file);
     if (written == 0) {
         printf("Error during writing to file !");
     }
