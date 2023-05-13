@@ -35,6 +35,7 @@ char *reg_registers[2][8] = {{"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"},
 
 // I need to figure out a way to map these registers 
 // to the actual register array.
+// TODO: get rid of these mod registers.
 char *mod_registers[8] = {"bx + si", "bx + di", "bp + si", "bp + di", "si", "di", "bp", "bx"};
 
 // This mapping takes the instruction_info.rm as an index and the value at that
