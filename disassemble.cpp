@@ -96,6 +96,7 @@ int main() {
 
     s16 register_map[8] = {};
     Flags flags = {};
+    u16 total_clocks = 0;
     while (instruction_index < file_size) {
 
         // This is a long process for deciding what the instruction type is going
@@ -115,8 +116,7 @@ int main() {
 
 
         if (types.size > 1) {
-            for(int index = 0; index < types.size; index++)
-            {
+            for(int index = 0; index < types.size; index++) {
                 u8 mid_bits_mask = 0b00'111'000; 
                 if (instruction_table[types.array[index]].mid_bits == 
                     (memory[instruction_index + 1] & mid_bits_mask)) {
@@ -136,13 +136,26 @@ int main() {
 
         PrintInstructionType(instruction_info);
 
-        DecodeInstruction(instruction_info, instruction_type, memory, &instruction_index, 
+        DecodeInstruction(&instruction_info, instruction_type, memory, &instruction_index, 
                           register_map, &flags);
 
+#if 0
         printf(" FLAGS --> "); 
         for(int i = 0; i < 9; i++) {
             printf("%d ", flags.flag_array[i]);
         }
+#endif
+        u16 instruction_clocks = instruction_info.clocks + instruction_info.ea;
+        total_clocks += instruction_clocks;
+
+        if (!instruction_info.ea) {
+            printf(" ; Clocks: +%u = %u | ", instruction_clocks, total_clocks);
+
+        } else {
+            printf(" ; Clocks: +%u = %u (%u + %uea) | ", instruction_clocks, total_clocks, 
+                                                         instruction_info.clocks, instruction_info.ea);
+        }
+
         printf("IP = %d\n", instruction_index);
     }
 
@@ -150,6 +163,7 @@ int main() {
     PrintRegisterValues(register_map);
     printf("IP = %d\n", instruction_index);
 
+#if 0
     int written = 0;
     file = fopen("mem_dump.data", "wb");
     written = fwrite(memory, sizeof(char), sizeof(memory), file);
@@ -157,4 +171,5 @@ int main() {
         printf("Error during writing to file !");
     }
     fclose(file);
+#endif
 }

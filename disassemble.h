@@ -117,6 +117,8 @@ struct Instruction_Info {
     bool is_arithmetic;
 
     u8 arithmetic_type;
+    u8 clocks;
+    u8 ea;
 };
 
 struct Instruction {

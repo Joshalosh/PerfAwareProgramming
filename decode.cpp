@@ -17,6 +17,8 @@ void InitInstructionInfo(Instruction_Info *info, char *memory, int instruction_i
     info->is_immediate    = instruction_table[instruction_type].is_immediate;
     info->is_arithmetic   = instruction_table[instruction_type].is_arithmetic;
     info->arithmetic_type = instruction_table[instruction_type].arithmetic_type;
+    info->clocks          = 0; 
+    info->ea              = 0;
 
     info->reg = (instruction_table[instruction_type].reg_on_first_byte) ? 
         memory[instruction_index] & instruction_table[instruction_type].reg_mask :
@@ -277,6 +279,8 @@ void SimulateMemory(Instruction_Info instruction_info, Flags *flags, char *memor
 
 s16 GetMemAddress(Instruction_Info instruction_info, s16 *register_map)
 {
+    // TODO: Adding some of the cycle counts in this function is probably 
+    // the easiest place to do it without having to do these operations again.
     s16 result     = 0;
 
     u8 reg_a_mask  = 0x0F;
@@ -418,50 +422,52 @@ void PrintRegisterValues(s16 *register_map)
     printf("DI ---> %d\n", register_map[7]); 
 }
 
-void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instruction_type, char *memory, 
+void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type instruction_type, char *memory, 
                        int *instruction_index, s16 *register_map, Flags *flags)
 {
-    if (instruction_info.has_second_instruction_byte) {
-        Mod_Type mod_type = CheckMod(instruction_info);
+    if (instruction_info->has_second_instruction_byte) {
+        Mod_Type mod_type = CheckMod(*instruction_info);
         switch (mod_type) { 
 
             case Mod_MemModeNoDisp: {
                 // For some reason there is a funny exeption in this mode where
                 // if the RM bits equal 110 then there is a 16 bit value that goes
                 // directly into the register.
-                if (instruction_info.rm == 0b110) {
-                    if (instruction_info.is_immediate) {
-                        PrintImmediateMemModeOperations(instruction_info, memory, 
+                if (instruction_info->rm == 0b110) {
+                    if (instruction_info->is_immediate) {
+                        PrintImmediateMemModeOperations(*instruction_info, memory, 
                                                         instruction_index, 2, flags,
                                                         register_map);
 
                     } else {
                         int bytes_to_value = 2;
                         s16 value          = CalculateWord(memory, *instruction_index, bytes_to_value);
-                        PrintRegister(instruction_info, reg_registers);
+                        PrintRegister(*instruction_info, reg_registers);
                         printf(", [");
                         printf("%d", value);
                         printf("]");
 
                         *instruction_index += 4;
-                        SimulateRegisters(instruction_info, flags, instruction_info.reg, 
+                        instruction_info->clocks = 8;
+                        instruction_info->ea = 6;
+                        SimulateRegisters(*instruction_info, flags, instruction_info->reg, 
                                           register_map, memory[value]);
                     }
 
-                } else if (instruction_info.is_immediate) {
-                    PrintImmediateMemModeOperations(instruction_info, memory, instruction_index,
+                } else if (instruction_info->is_immediate) {
+                    PrintImmediateMemModeOperations(*instruction_info, memory, instruction_index,
                                                     0, flags, register_map);
 
                 } else {
-                    PrintMemModeOperations(instruction_info, memory, register_map, flags, 0);
+                    PrintMemModeOperations(*instruction_info, memory, register_map, flags, 0);
 
                     *instruction_index += 2;
                 }
             } break;
 
             case Mod_MemModeDisp8: {
-                if (instruction_info.is_immediate) {
-                    PrintImmediateMemModeOperations(instruction_info, memory,
+                if (instruction_info->is_immediate) {
+                    PrintImmediateMemModeOperations(*instruction_info, memory,
                                                     instruction_index, 2, 
                                                     flags, register_map);
                                                     
@@ -469,7 +475,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                 } else {
                     int bytes_to_displacement = 2;
                     s16 displacement          = memory[(*instruction_index) + bytes_to_displacement];
-                    PrintMemModeOperations(instruction_info, memory, register_map, 
+                    PrintMemModeOperations(*instruction_info, memory, register_map, 
                                            flags, displacement);
 
                     *instruction_index += 3;
@@ -479,15 +485,15 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
             case Mod_MemModeDisp16: {
                 int bytes_to_displacement = 2;
 
-                if (instruction_info.is_immediate) {
-                    PrintImmediateMemModeOperations(instruction_info, memory, instruction_index, 
+                if (instruction_info->is_immediate) {
+                    PrintImmediateMemModeOperations(*instruction_info, memory, instruction_index, 
                                                     bytes_to_displacement, flags, 
                                                     register_map);
 
                 } else {
 
                     s16 displacement = CalculateWord(memory, *instruction_index, bytes_to_displacement);
-                    PrintMemModeOperations(instruction_info, memory, register_map, 
+                    PrintMemModeOperations(*instruction_info, memory, register_map, 
                                            flags, displacement);
 
                     *instruction_index += 4;
@@ -495,33 +501,34 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
             } break;
 
             case Mod_RegMode: {
-                if (!instruction_info.is_immediate) {
-                    if (instruction_info.d_bit) {
-                        PrintRegister(instruction_info, reg_registers);
+                if (!instruction_info->is_immediate) {
+                    if (instruction_info->d_bit) {
+                        PrintRegister(*instruction_info, reg_registers);
                         printf(", ");
-                        PrintRM(instruction_info, reg_registers);
+                        PrintRM(*instruction_info, reg_registers);
 
                         *instruction_index += 2;
-                        SimulateRegisters(instruction_info, flags, instruction_info.reg, register_map, 
-                                          register_map[instruction_info.rm]);
+                        SimulateRegisters(*instruction_info, flags, instruction_info->reg, register_map, 
+                                          register_map[instruction_info->rm]);
 
                     } else {
-                        PrintRM(instruction_info, reg_registers);
+                        PrintRM(*instruction_info, reg_registers);
                         printf(", ");
-                        if(!instruction_info.is_immediate) {
-                            PrintRegister(instruction_info, reg_registers);
+                        if(!instruction_info->is_immediate) {
+                            PrintRegister(*instruction_info, reg_registers);
 
                             *instruction_index += 2;
-                            SimulateRegisters(instruction_info, flags, instruction_info.rm, register_map,
-                                              register_map[instruction_info.reg]);
+                            SimulateRegisters(*instruction_info, flags, instruction_info->rm, register_map,
+                                              register_map[instruction_info->reg]);
                         }
                     }
 
 
                 } else {
-                    PrintImmediateRegModeOperations(instruction_info, memory, instruction_index, 
+                    PrintImmediateRegModeOperations(*instruction_info, memory, instruction_index, 
                                                     register_map, flags);
                 }
+                instruction_info->clocks += 2;
             } break;  
 
             default: {
@@ -535,13 +542,13 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
             case InstructionType_MovImmediateReg: 
             {
                 if (instruction_type == InstructionType_MovImmediateReg) {
-                    instruction_info.w_bit >>= 3;
+                    instruction_info->w_bit >>= 3;
                 }
-                PrintRegister(instruction_info, reg_registers);
+                PrintRegister(*instruction_info, reg_registers);
                 printf(", ");
 
                 s16 data = 0;
-                if (instruction_info.w_bit) {
+                if (instruction_info->w_bit) {
                     int data_offset = 1;
                     data = CalculateWord(memory, *instruction_index, data_offset);
                     *instruction_index += 3;
@@ -550,11 +557,10 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                     data = memory[(*instruction_index) + 1];
                     *instruction_index += 2;
                 }
-
-
-                SimulateRegisters(instruction_info, flags, instruction_info.reg, register_map, data);
-
                 printf("%d", data);
+
+                instruction_info->clocks = 4;
+                SimulateRegisters(*instruction_info, flags, instruction_info->reg, register_map, data);
             } break;
 
             case InstructionType_CmpImmediateWithAccum:
@@ -562,12 +568,12 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
             case InstructionType_AddImmediateToAccum:
             case InstructionType_MovMemToAccum: 
             {
-                PrintRegister(instruction_info, reg_registers);
+                PrintRegister(*instruction_info, reg_registers);
                 printf(", ");
 
                 s16 data = 0;
 
-                if (instruction_info.w_bit) {
+                if (instruction_info->w_bit) {
                     int data_offset = 1;
                     data            = CalculateWord(memory, *instruction_index, data_offset);
                     *instruction_index += 3;
@@ -577,7 +583,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                     *instruction_index += 2;
                 }
 
-                if (!instruction_info.is_immediate) {
+                if (!instruction_info->is_immediate) {
                     printf("[%d]", data);
 
                 } else {
@@ -588,7 +594,7 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
             case InstructionType_MovAccumToMem:
             {
                 s16 data = 0;
-                if (instruction_info.w_bit) {
+                if (instruction_info->w_bit) {
                     int data_offset = 1;
                     data            = CalculateWord(memory, *instruction_index, data_offset);
                     *instruction_index += 3;
@@ -598,14 +604,14 @@ void DecodeInstruction(Instruction_Info instruction_info, Instruction_Type instr
                     *instruction_index += 2;
                 }
 
-                if (!instruction_info.is_immediate) {
+                if (!instruction_info->is_immediate) {
                     printf("[%d], ", data);
 
                 } else {
                     printf("%d, ", data);
                 }
 
-                PrintRegister(instruction_info, reg_registers);
+                PrintRegister(*instruction_info, reg_registers);
             }break;
 
             case InstructionType_JmpJNE:
