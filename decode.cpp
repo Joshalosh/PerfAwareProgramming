@@ -403,7 +403,18 @@ void PrintMemModeOperations(Instruction_Info *instruction_info, char *memory,
         PrintRegDisplacement(displacement);
         printf("]");
 
-        instruction_info->clocks = 8;
+        switch (instruction_info->arithmetic_type)
+        {
+            case ArithType_None:
+            {
+                instruction_info->clocks = 8;
+            } break;
+            case ArithType_Add:
+            {
+                instruction_info->clocks = 9;
+            } break;
+        }
+
         SimulateRegisters(*instruction_info, flags, instruction_info->reg, 
                           register_map, memory[mem_address]);
 
@@ -414,7 +425,17 @@ void PrintMemModeOperations(Instruction_Info *instruction_info, char *memory,
         printf("], ");
         PrintRegister(*instruction_info, reg_registers);
 
-        instruction_info->clocks = 9;
+        switch (instruction_info->arithmetic_type)
+        {
+            case ArithType_None:
+            {
+                instruction_info->clocks = 9;
+            } break;
+            case ArithType_Add:
+            {
+                instruction_info->clocks = 16;
+            } break;
+        }
         SimulateMemory(*instruction_info, flags, memory, register_map[instruction_info->reg], 
                        mem_address);  
     }
@@ -486,7 +507,17 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
                         printf("]");
 
                         *instruction_index += 4;
-                        instruction_info->clocks = 8;
+                        switch (instruction_info->arithmetic_type)
+                        {
+                            case ArithType_None:
+                            {
+                                instruction_info->clocks = 8;
+                            } break;
+                            case ArithType_Add:
+                            {
+                                instruction_info->clocks = 9;
+                            }
+                        }
                         instruction_info->ea = 6;
                         SimulateRegisters(*instruction_info, flags, instruction_info->reg, 
                                           register_map, memory[value]);
@@ -561,12 +592,23 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
                         }
                     }
 
+                    switch (instruction_info->arithmetic_type)
+                    {
+                        case ArithType_None:
+                        {
+                            instruction_info->clocks += 2;
+                        } break;
+                        case ArithType_Add:
+                        {
+                            instruction_info->clocks += 3;
+                        }
+                    }
 
                 } else {
                     PrintImmediateRegModeOperations(*instruction_info, memory, instruction_index, 
                                                     register_map, flags);
+                    instruction_info->clocks += 4;
                 }
-                instruction_info->clocks += 2;
             } break;  
 
             default: {
