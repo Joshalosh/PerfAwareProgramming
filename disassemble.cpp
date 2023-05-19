@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include "disassemble.h"
+#include "clocks.cpp"
 
 #include "decode.cpp"
 
@@ -74,11 +75,11 @@ int main() {
     file = fopen("draw_image", "rb");
 #endif
 
-#if 0
+#if 1
     file = fopen("cycles", "rb");
 #endif
 
-#if 1 
+#if 0 
     file = fopen("challenge_cycles", "rb");
 #endif
 

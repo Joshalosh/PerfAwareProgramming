@@ -101,6 +101,21 @@ enum Arithmetic_Type : u8 {
     ArithType_Count,
 };
 
+enum OpType : u8 {
+    OpType_None,
+    OpType_Reg_Reg,
+    OpType_Reg_Mem,
+    OpType_Mem_Reg,
+    OpType_Reg_Imm,
+    OpType_Mem_Imm,
+    OpType_Accum_Imm,
+
+    OpType_Mem_Accum,
+    OpType_Accum_Mem,
+
+    OpType_Count,
+};
+
 struct Instruction_Info {
     u8 opcode;
     u8 d_bit;
@@ -110,15 +125,17 @@ struct Instruction_Info {
     u8 reg;
     u8 rm; 
     u8 mid_bits;
+    u8 arithmetic_type;
+
+    u8 clocks;
+    u8 ea;
 
     char *op_name;
     bool is_immediate;
     bool has_second_instruction_byte;
     bool is_arithmetic;
 
-    u8 arithmetic_type;
-    u8 clocks;
-    u8 ea;
+    OpType operation_type;
 };
 
 struct Instruction {

@@ -17,8 +17,6 @@ void InitInstructionInfo(Instruction_Info *info, char *memory, int instruction_i
     info->is_immediate    = instruction_table[instruction_type].is_immediate;
     info->is_arithmetic   = instruction_table[instruction_type].is_arithmetic;
     info->arithmetic_type = instruction_table[instruction_type].arithmetic_type;
-    info->clocks          = 0; 
-    info->ea              = 0;
 
     info->reg = (instruction_table[instruction_type].reg_on_first_byte) ? 
         memory[instruction_index] & instruction_table[instruction_type].reg_mask :
@@ -506,19 +504,10 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
                         printf("%d", value);
                         printf("]");
 
-                        *instruction_index += 4;
-                        switch (instruction_info->arithmetic_type)
-                        {
-                            case ArithType_None:
-                            {
-                                instruction_info->clocks = 8;
-                            } break;
-                            case ArithType_Add:
-                            {
-                                instruction_info->clocks = 9;
-                            }
-                        }
-                        instruction_info->ea = 6;
+                        *instruction_index   += 4;
+                        instruction_info->ea  = 6;
+                        instruction_info->operation_type = OpType_Reg_Mem;
+                        CalculateClocks(instruction_info);
                         SimulateRegisters(*instruction_info, flags, instruction_info->reg, 
                                           register_map, memory[value]);
                     }
@@ -592,23 +581,15 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
                         }
                     }
 
-                    switch (instruction_info->arithmetic_type)
-                    {
-                        case ArithType_None:
-                        {
-                            instruction_info->clocks += 2;
-                        } break;
-                        case ArithType_Add:
-                        {
-                            instruction_info->clocks += 3;
-                        }
-                    }
+                    instruction_info->operation_type = OpType_Reg_Reg;
 
                 } else {
                     PrintImmediateRegModeOperations(*instruction_info, memory, instruction_index, 
                                                     register_map, flags);
-                    instruction_info->clocks += 4;
+                    instruction_info->operation_type = OpType_Reg_Imm;
                 }
+
+                CalculateClocks(instruction_info);
             } break;  
 
             default: {
@@ -639,7 +620,8 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
                 }
                 printf("%d", data);
 
-                instruction_info->clocks = 4;
+                instruction_info->operation_type = OpType_Reg_Imm; 
+                CalculateClocks(instruction_info);
                 SimulateRegisters(*instruction_info, flags, instruction_info->reg, register_map, data);
             } break;
 
