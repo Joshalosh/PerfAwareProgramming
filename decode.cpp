@@ -401,18 +401,7 @@ void PrintMemModeOperations(Instruction_Info *instruction_info, char *memory,
         PrintRegDisplacement(displacement);
         printf("]");
 
-        switch (instruction_info->arithmetic_type)
-        {
-            case ArithType_None:
-            {
-                instruction_info->clocks = 8;
-            } break;
-            case ArithType_Add:
-            {
-                instruction_info->clocks = 9;
-            } break;
-        }
-
+        instruction_info->operation_type = OpType_Reg_Mem;
         SimulateRegisters(*instruction_info, flags, instruction_info->reg, 
                           register_map, memory[mem_address]);
 
@@ -423,17 +412,7 @@ void PrintMemModeOperations(Instruction_Info *instruction_info, char *memory,
         printf("], ");
         PrintRegister(*instruction_info, reg_registers);
 
-        switch (instruction_info->arithmetic_type)
-        {
-            case ArithType_None:
-            {
-                instruction_info->clocks = 9;
-            } break;
-            case ArithType_Add:
-            {
-                instruction_info->clocks = 16;
-            } break;
-        }
+        instruction_info->operation_type = OpType_Mem_Reg;
         SimulateMemory(*instruction_info, flags, memory, register_map[instruction_info->reg], 
                        mem_address);  
     }
@@ -495,6 +474,7 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
                         PrintImmediateMemModeOperations(*instruction_info, memory, 
                                                         instruction_index, 2, flags,
                                                         register_map);
+                        instruction_info->operation_type = OpType_Mem_Imm;
 
                     } else {
                         int bytes_to_value = 2;
@@ -507,7 +487,6 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
                         *instruction_index   += 4;
                         instruction_info->ea  = 6;
                         instruction_info->operation_type = OpType_Reg_Mem;
-                        CalculateClocks(instruction_info);
                         SimulateRegisters(*instruction_info, flags, instruction_info->reg, 
                                           register_map, memory[value]);
                     }
@@ -515,12 +494,15 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
                 } else if (instruction_info->is_immediate) {
                     PrintImmediateMemModeOperations(*instruction_info, memory, instruction_index,
                                                     0, flags, register_map);
+                    instruction_info->operation_type = OpType_Mem_Imm;
 
                 } else {
                     PrintMemModeOperations(instruction_info, memory, register_map, flags, 0);
 
                     *instruction_index += 2;
                 }
+
+                CalculateClocks(instruction_info);
             } break;
 
             case Mod_MemModeDisp8: {
@@ -528,7 +510,7 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
                     PrintImmediateMemModeOperations(*instruction_info, memory,
                                                     instruction_index, 2, 
                                                     flags, register_map);
-                                                    
+                    instruction_info->operation_type = OpType_Mem_Imm;
 
                 } else {
                     int bytes_to_displacement = 2;
@@ -538,6 +520,8 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
 
                     *instruction_index += 3;
                 }
+
+                CalculateClocks(instruction_info);
             } break; 
 
             case Mod_MemModeDisp16: {
@@ -547,6 +531,7 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
                     PrintImmediateMemModeOperations(*instruction_info, memory, instruction_index, 
                                                     bytes_to_displacement, flags, 
                                                     register_map);
+                    instruction_info->operation_type = OpType_Mem_Imm;
 
                 } else {
 
@@ -556,6 +541,8 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
 
                     *instruction_index += 4;
                 }
+
+                CalculateClocks(instruction_info);
             } break;
 
             case Mod_RegMode: {
@@ -647,10 +634,14 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
 
                 if (!instruction_info->is_immediate) {
                     printf("[%d]", data);
+                    instruction_info->operation_type = OpType_Mem_Accum;
 
                 } else {
                     printf("%d", data);
+                    instruction_info->operation_type = OpType_Accum_Imm;
                 }
+
+                CalculateClocks(instruction_info);
             } break;
 
             case InstructionType_MovAccumToMem:
@@ -668,12 +659,15 @@ void DecodeInstruction(Instruction_Info *instruction_info, Instruction_Type inst
 
                 if (!instruction_info->is_immediate) {
                     printf("[%d], ", data);
+                    instruction_info->operation_type = OpType_Accum_Mem;
 
                 } else {
                     printf("%d, ", data);
+                    instruction_info->operation_type = OpType_Accum_Imm;
                 }
 
                 PrintRegister(*instruction_info, reg_registers);
+                CalculateClocks(instruction_info);
             }break;
 
             case InstructionType_JmpJNE:
