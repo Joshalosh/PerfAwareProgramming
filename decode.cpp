@@ -292,10 +292,12 @@ s16 GetMemAddress(Instruction_Info *instruction_info, s16 *register_map)
     // the easiest place to do it without having to do these operations again.
     s16 result     = 0;
 
+    u8 mem_displacement = mem_map[instruction_info->rm];
+
     u8 reg_a_mask  = 0x0F;
     u8 reg_b_mask  = 0xF0;
-    u8 reg_a_index = (mem_map[instruction_info->rm] & reg_a_mask) >> 0;
-    u8 reg_b_index = (mem_map[instruction_info->rm] & reg_b_mask) >> 4;
+    u8 reg_a_index = (mem_displacement & reg_a_mask) >> 0;
+    u8 reg_b_index = (mem_displacement & reg_b_mask) >> 4;
     
     result = reg_b_index ? 
              register_map[reg_a_index] + register_map[reg_b_index] : 
@@ -305,7 +307,7 @@ s16 GetMemAddress(Instruction_Info *instruction_info, s16 *register_map)
         instruction_info->ea = 5; 
     }
 
-    switch (result)
+    switch (mem_displacement)
     {
         case MemMap_BP_DI: 
         case MemMap_BX_SI:
