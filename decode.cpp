@@ -3,26 +3,29 @@
 #define MAX_REGISTERS 16
 #define REGISTER_CHAR_LENGTH 3
 
-void InitInstructionInfo(Instruction_Info *info, char *memory, int instruction_index,
+Instruction_Info InitInstructionInfo(char *memory, int instruction_index,
                          Instruction *instruction_table, Instruction_Type instruction_type)
 {
-    info->opcode          = memory[instruction_index] & instruction_table[instruction_type].op_mask;
-    info->d_bit           = memory[instruction_index] & instruction_table[instruction_type].d_mask;
-    info->s_bit           = memory[instruction_index] & instruction_table[instruction_type].s_mask;
-    info->w_bit           = memory[instruction_index] & instruction_table[instruction_type].w_mask;
-    info->mod             = (memory[instruction_index+1] & instruction_table[instruction_type].mod_mask) >> 6;
-    info->rm              = memory[instruction_index+1] & instruction_table[instruction_type].rm_mask;
-    info->mid_bits        = instruction_table[instruction_type].mid_bits;
-    info->op_name         = instruction_table[instruction_type].op_name;
-    info->is_immediate    = instruction_table[instruction_type].is_immediate;
-    info->is_arithmetic   = instruction_table[instruction_type].is_arithmetic;
-    info->arithmetic_type = instruction_table[instruction_type].arithmetic_type;
+    Instruction_Info info = {};
+    info.opcode           = memory[instruction_index] & instruction_table[instruction_type].op_mask;
+    info.d_bit            = memory[instruction_index] & instruction_table[instruction_type].d_mask;
+    info.s_bit            = memory[instruction_index] & instruction_table[instruction_type].s_mask;
+    info.w_bit            = memory[instruction_index] & instruction_table[instruction_type].w_mask;
+    info.mod              = (memory[instruction_index+1] & instruction_table[instruction_type].mod_mask) >> 6;
+    info.rm               = memory[instruction_index+1] & instruction_table[instruction_type].rm_mask;
+    info.mid_bits         = instruction_table[instruction_type].mid_bits;
+    info.op_name          = instruction_table[instruction_type].op_name;
+    info.is_immediate     = instruction_table[instruction_type].is_immediate;
+    info.is_arithmetic    = instruction_table[instruction_type].is_arithmetic;
+    info.arithmetic_type  = instruction_table[instruction_type].arithmetic_type;
 
-    info->reg = (instruction_table[instruction_type].reg_on_first_byte) ? 
+    info.reg = (instruction_table[instruction_type].reg_on_first_byte) ? 
         memory[instruction_index] & instruction_table[instruction_type].reg_mask :
         (memory[instruction_index+1] & instruction_table[instruction_type].reg_mask) >> 3;
 
-    info->has_second_instruction_byte = instruction_table[instruction_type].has_second_instruction_byte;
+    info.has_second_instruction_byte = instruction_table[instruction_type].has_second_instruction_byte;
+
+    return info;
 }
 
 void PrintInstructionType(Instruction_Info instruction_info)

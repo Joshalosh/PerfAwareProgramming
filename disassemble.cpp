@@ -136,8 +136,8 @@ int main() {
 
         int bytes_to_next_instruction = 0;
 
-        Instruction_Info instruction_info = {};
-        InitInstructionInfo(&instruction_info, memory, instruction_index, instruction_table, instruction_type);
+        Instruction_Info instruction_info = InitInstructionInfo(memory, instruction_index, 
+                                                                instruction_table, instruction_type);
 
         PrintInstructionType(instruction_info);
 
