@@ -1,6 +1,9 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
+
+#include "harversine_generate.h"
 
 int main(int argc, char *argv[])
 {
@@ -13,16 +16,16 @@ int main(int argc, char *argv[])
 
         json_file = fopen("points.json", "w");
 
-        int seed = atoi(argv[1]);
-        int pair_count = atoi(argv[2]);
+        s32 seed = atoi(argv[1]);
+        s32 pair_count = atoi(argv[2]);
         srand(seed);
 
         fprintf(json_file, "{\"pairs\":[\n");
-        for(int index = 0; index < pair_count; index++) {
-            float x_max =  180.0f;
-            float x_min = -180.0f;
-            float y_max =  90.0f;
-            float y_min = -90.0f;
+        for(s32 index = 0; index < pair_count; index++) {
+            f32 x_max =  180.0f;
+            f32 x_min = -180.0f;
+            f32 y_max =  90.0f;
+            f32 y_min = -90.0f;
 
             // To get a random floating point number in the correct range first
             // I need to get a normalised random number between the ranges of
@@ -34,10 +37,10 @@ int main(int argc, char *argv[])
             // RAND_MAX is the maximum random value I can get which is 32767.
             // so by dividing my random value by that amount and casting it to
             // a float I can normalise my random value between [0, 1].
-            float x0 = x_min + ((float)rand() / RAND_MAX * (2*x_max));
-            float y0 = y_min + ((float)rand() / RAND_MAX * (2*y_max));
-            float x1 = x_min + ((float)rand() / RAND_MAX * (2*x_max));
-            float y1 = y_min + ((float)rand() / RAND_MAX * (2*y_max));
+            f32 x0 = x_min + ((f32)rand() / RAND_MAX * (2*x_max));
+            f32 y0 = y_min + ((f32)rand() / RAND_MAX * (2*y_max));
+            f32 x1 = x_min + ((f32)rand() / RAND_MAX * (2*x_max));
+            f32 y1 = y_min + ((f32)rand() / RAND_MAX * (2*y_max));
 
             fprintf(json_file, "\t{\"x0\":%f, \"y0\":%f, ", x0, y0);
             fprintf(json_file, "\"x1\":%f, \"y1\":%f}", x1, y1);
