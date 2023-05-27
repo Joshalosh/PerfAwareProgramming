@@ -40,9 +40,14 @@ int main(int argc, char *argv[])
             float y1 = y_min + ((float)rand() / RAND_MAX * (2*y_max));
 
             fprintf(json_file, "\t{\"x0\":%f, \"y0\":%f, ", x0, y0);
-            fprintf(json_file, "\"x1\":%f, \"y1\":%f},\n", x1, y1);
+            fprintf(json_file, "\"x1\":%f, \"y1\":%f}", x1, y1);
+
+            if (index < pair_count - 1) {
+                fprintf(json_file, ",\n");
+            }
         }
 
+        fprintf(json_file, "\n]}");
         fclose(json_file);
     }
 }
