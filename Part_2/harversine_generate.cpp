@@ -1,5 +1,6 @@
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 int main(int argc, char *argv[])
 {
@@ -18,15 +19,28 @@ int main(int argc, char *argv[])
 
         fprintf(json_file, "{\"pairs\":[\n");
         for(int index = 0; index < pair_count; index++) {
-            float range = 180.0f;
+            float x_max =  180.0f;
+            float x_min = -180.0f;
+            float y_max =  90.0f;
+            float y_min = -90.0f;
 
-            float x0 = ((float)rand()/(float)(RAND_MAX)) * range;
-            float y0 = ((float)rand()/(float)(RAND_MAX)) * range;
-            float x1 = ((float)rand()/(float)(RAND_MAX)) * range;
-            float y1 = ((float)rand()/(float)(RAND_MAX)) * range;
+            // To get a random floating point number in the correct range first
+            // I need to get a normalised random number between the ranges of
+            // [0, 1] and then multiple it by double the maximum range amount.
+            // Then I add the minimum range amount to that value to shift the entire
+            // range down by that minimum value. This results in a random float
+            // that spans the correct range I'm looking for. 
+            //
+            // RAND_MAX is the maximum random value I can get which is 32767.
+            // so by dividing my random value by that amount and casting it to
+            // a float I can normalise my random value between [0, 1].
+            float x0 = x_min + ((float)rand() / RAND_MAX * (2*x_max));
+            float y0 = y_min + ((float)rand() / RAND_MAX * (2*y_max));
+            float x1 = x_min + ((float)rand() / RAND_MAX * (2*x_max));
+            float y1 = y_min + ((float)rand() / RAND_MAX * (2*y_max));
 
-            fprintf(json_file, "\t{\"x0\":%f, \"y0\":%f,\n", x0, y0);
-            fprintf(json_file, "{\"x1\":%f, \"y1\":%f},\n", x1, y1);
+            fprintf(json_file, "\t{\"x0\":%f, \"y0\":%f, ", x0, y0);
+            fprintf(json_file, "\"x1\":%f, \"y1\":%f},\n", x1, y1);
         }
 
         fclose(json_file);
