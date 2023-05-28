@@ -3,9 +3,11 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "harversine_generate.h"
-#include "harversine_math.h"
-#include "harversine_calculate.cpp"
+#include "haversine_generate.h"
+#include "haversine_math.h"
+#include "haversine_calculate.cpp"
+
+#define EARTH_RADIUS 6372.8f
 
 int main(int argc, char *argv[])
 {
@@ -21,6 +23,8 @@ int main(int argc, char *argv[])
         s32 seed = atoi(argv[1]);
         s32 pair_count = atoi(argv[2]);
         srand(seed);
+
+        f64 average_haversine = 0;
 
         fprintf(json_file, "{\"pairs\":[\n");
         for(s32 index = 0; index < pair_count; index++) {
@@ -50,7 +54,12 @@ int main(int argc, char *argv[])
             if (index < pair_count - 1) {
                 fprintf(json_file, ",\n");
             }
+
+            average_haversine += ReferenceHaversine(x0, y0, x1, y1, EARTH_RADIUS);
         }
+
+        average_haversine /= pair_count;
+        printf("\n\tThe Average sum is: %f\n", average_haversine);
 
         fprintf(json_file, "\n]}");
         fclose(json_file);
