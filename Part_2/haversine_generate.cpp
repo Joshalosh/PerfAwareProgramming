@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
         json_file = fopen("points.json", "w");
         haversine_file = fopen("results.f32", "w");
 
+        // Deal with the command line arguments here.
         s32 seed = atoi(argv[1]);
         s32 pair_count = atoi(argv[2]);
         srand(seed);
