@@ -17,8 +17,10 @@ int main(int argc, char *argv[])
     else {
         
         FILE *json_file;
+        FILE *haversine_file;
 
         json_file = fopen("points.json", "w");
+        haversine_file = fopen("results.f32", "w");
 
         s32 seed = atoi(argv[1]);
         s32 pair_count = atoi(argv[2]);
@@ -55,7 +57,10 @@ int main(int argc, char *argv[])
                 fprintf(json_file, ",\n");
             }
 
-            average_haversine += ReferenceHaversine(x0, y0, x1, y1, EARTH_RADIUS);
+            f32 haversine = ReferenceHaversine(x0, y0, x1, y1, EARTH_RADIUS);
+            fprintf(haversine_file, "%f\n", haversine);
+
+            average_haversine += haversine;
         }
 
         average_haversine /= pair_count;
@@ -63,5 +68,6 @@ int main(int argc, char *argv[])
 
         fprintf(json_file, "\n]}");
         fclose(json_file);
+        fclose(haversine_file);
     }
 }
