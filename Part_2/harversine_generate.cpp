@@ -4,6 +4,8 @@
 #include <math.h>
 
 #include "harversine_generate.h"
+#include "harversine_math.h"
+#include "harversine_calculate.cpp"
 
 int main(int argc, char *argv[])
 {
