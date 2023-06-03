@@ -2,10 +2,15 @@
 #include <stdlib.h>
 #include "haversine_generate.h"
 
-char *LoadFile(char* filename) {
+struct File_Content {
+    char *data;
+    size_t size;
+};
 
-    char *result = 0;
-    FILE* file = fopen(filename, "r");
+File_Content LoadFile(char* filename) {
+
+    File_Content result = {};
+    FILE* file = fopen(filename, "rb");
     if (!file) {
         printf("Failed to open file\n");
     }
@@ -34,14 +39,14 @@ char *LoadFile(char* filename) {
                 printf("Failed to read file\n");
                 free(buffer);
                 fclose(file);
-                return NULL;
             }
             
             // Null-terminate the buffer
             buffer[file_size] = '\0';
 
             fclose(file);
-            result = buffer;
+            result.data = buffer;
+            result.size = file_size;
         }
     }
 
@@ -55,10 +60,10 @@ int main(int argc, char *argv[])
     } else {
         char *filename = argv[1];
 
-        char *loaded_file = LoadFile(filename);
+        File_Content loaded_file = LoadFile(filename);
 
-        for(int i = 0; i < 40; i++) {
-            printf("%c", loaded_file[i]);
+        for(int i = 0; i < loaded_file.size; i++) {
+            printf("%c", loaded_file.data[i]);
         }
         printf("\n END OF TEST \n");
     }
