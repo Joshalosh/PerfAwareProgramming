@@ -7,6 +7,51 @@ struct File_Content {
     size_t size;
 };
 
+enum Token_Type {
+    TokenType_None,
+    TokenType_String,
+    TokenType_Real,
+    TokenType_Num,
+
+    TokenType_Count,
+};
+struct Token {
+    Token_Type type;
+    union {
+        char *string;
+        float real_num;
+        int   num;
+    };
+    Token *next;
+    Token *prev;
+};
+
+struct Memory_Arena {
+    char *current;
+    char *end;
+};
+
+void InitArena(Memory_Arena *arena, size_t size) {
+    arena->current = malloc(size);
+    arena->end     = arena->current + size;
+}
+
+void *ArenaAlloc(Memory_Arena *arena, size_t size) {
+    void *result = NULL;
+    if (!(arena->current + size > arena->end)) { // Not enough space left in the arena.
+        result = arena->current;
+        arena->current += size;
+    }
+    
+
+    return result;
+}
+
+void FreeArena(Memory_Arena *arena) {
+    free(arena->current);
+}
+
+
 File_Content LoadFile(char* filename) {
 
     File_Content result = {};
@@ -53,8 +98,7 @@ File_Content LoadFile(char* filename) {
     return result;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     if (argc < 2) {
         printf("Need to call exectuable with arguments: -- harversine_parser.exe (char *)<filename.json>\n");
     } else {
