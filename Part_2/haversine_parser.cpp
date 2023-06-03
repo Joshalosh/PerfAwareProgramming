@@ -84,10 +84,21 @@ int main(int argc, char *argv[]) {
         char *filename = argv[1];
 
         File_Content loaded_file = LoadFile(filename);
-        char *token_block = (char *)ArenaAlloc(&arena, 32*loaded_file.size);
+        Token *sentinel = (Token *)ArenaAlloc(&arena, sizeof(Token));
+        sentinel = {};
+        sentinel->next = sentinel;
+        senitinel->prev = senitnel;
 
         for(int i = 0; i < loaded_file.size; i++) {
-            printf("%c", loaded_file.data[i]);
+            Token *new_token = (Token *)ArenaAlloc(&arena, sizeof(Token));
+            token = {};
+            token->next = sentinel->next;
+            token->prev = sentinel;
+            sentinel->next = token;
+            if (sentinel->prev == sentinel)
+                sentinel->prev = token;
+
+            TokeniseElement(new_token, loaded_file[i]);
         }
 
         printf("\n Size of Token: %zu\n", sizeof(struct Token));
