@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "haversine_generate.h"
+#include "haversine.h"
 
 struct File_Content {
     char *data;
@@ -25,31 +27,6 @@ struct Token {
     Token *next;
     Token *prev;
 };
-
-struct Memory_Arena {
-    char *current;
-    char *end;
-};
-
-void InitArena(Memory_Arena *arena, size_t size) {
-    arena->current = malloc(size);
-    arena->end     = arena->current + size;
-}
-
-void *ArenaAlloc(Memory_Arena *arena, size_t size) {
-    void *result = NULL;
-    if (!(arena->current + size > arena->end)) { // Not enough space left in the arena.
-        result = arena->current;
-        arena->current += size;
-    }
-    
-
-    return result;
-}
-
-void FreeArena(Memory_Arena *arena) {
-    free(arena->current);
-}
 
 
 File_Content LoadFile(char* filename) {
@@ -102,13 +79,18 @@ int main(int argc, char *argv[]) {
     if (argc < 2) {
         printf("Need to call exectuable with arguments: -- harversine_parser.exe (char *)<filename.json>\n");
     } else {
+        Memory_Arena arena;
+        InitArena(&arena, 1024*1024);
         char *filename = argv[1];
 
         File_Content loaded_file = LoadFile(filename);
+        char *token_block = (char *)ArenaAlloc(&arena, 32*loaded_file.size);
 
         for(int i = 0; i < loaded_file.size; i++) {
             printf("%c", loaded_file.data[i]);
         }
-        printf("\n END OF TEST \n");
+
+        printf("\n Size of Token: %zu\n", sizeof(struct Token));
+        FreeArena(&arena);
     }
 }
