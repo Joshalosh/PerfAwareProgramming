@@ -1,4 +1,5 @@
 #if !defined(HARVERSINE_GENERATE_H)
+#include <stdint.h>
 
 typedef float f32;
 typedef double f64;
