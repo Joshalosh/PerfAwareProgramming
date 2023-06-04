@@ -80,10 +80,10 @@ int main(int argc, char *argv[]) {
             }
 
             if (new_token) {
-                new_token->prev      = sentinel->prev;
-                new_token->next      = sentinel;
-                sentinel->prev->next = new_token;
-                sentinel->prev       = new_token;
+                new_token->prev       = sentinel->prev;
+                new_token->next       = sentinel;
+                new_token->prev->next = new_token;
+                new_token->next->prev = new_token; 
             }
         }
 
