@@ -75,6 +75,19 @@ File_Content LoadFile(char* filename) {
     return result;
 }
 
+Token *SearchForTokens(Memory_Arena *arena, File_Content loaded_file, int *index) {
+    if (loaded_file.data[index] == '"') {
+        index++;
+        while (loaded_file.data[index] != '"'){
+            // Get the size of the string
+        }
+        // initialise the array to the known size.
+        // add all the elements to the array up to the size
+        // set the token.string to point to the array
+
+    }
+}
+
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         printf("Need to call exectuable with arguments: -- harversine_parser.exe (char *)<filename.json>\n");
@@ -90,15 +103,14 @@ int main(int argc, char *argv[]) {
         senitinel->prev = senitnel;
 
         for(int i = 0; i < loaded_file.size; i++) {
-            Token *new_token = (Token *)ArenaAlloc(&arena, sizeof(Token));
-            token = {};
-            token->next = sentinel->next;
-            token->prev = sentinel;
-            sentinel->next = token;
-            if (sentinel->prev == sentinel)
-                sentinel->prev = token;
+            Token *new_token = SearchForTokens(&arena, loaded_file, &i);
 
-            TokeniseElement(new_token, loaded_file[i]);
+            if (new_token) {
+                new_token->prev = sentinel->prev;
+                new_token->next = sentinel;
+                sentinel->prev->next = new_token;
+                sentinel->prev = new_token;
+            }
         }
 
         printf("\n Size of Token: %zu\n", sizeof(struct Token));
