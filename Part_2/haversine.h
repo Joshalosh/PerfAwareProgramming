@@ -1,5 +1,30 @@
 #if !defined(HAVERSINE_H)
 
+struct File_Content {
+    char *data;
+    size_t size;
+};
+
+enum Token_Type {
+    TokenType_None,
+    TokenType_String,
+    TokenType_Real,
+    TokenType_Num,
+
+    TokenType_Count,
+};
+struct Token {
+    Token_Type type;
+    union {
+        char *string;
+        float real_num;
+        int   num;
+    };
+    Token *next;
+    Token *prev;
+};
+
+
 struct Memory_Arena {
     char *current;
     char *end;
@@ -23,6 +48,16 @@ void *ArenaAlloc(Memory_Arena *arena, size_t size) {
 
 void FreeArena(Memory_Arena *arena) {
     free(arena->current);
+}
+
+#define ZeroStruct(instance) ZeroSize(sizeof(instance), &(instance))
+#define ZeroArray(count, pointer) ZeroSize(count*sizeof((pointer)[0]), pointer)
+void ZeroSize(size_t size, void *ptr) {
+    u8 *byte = (u8 *)ptr;
+    while(size--)
+    {
+        *byte++ = 0;
+    }
 }
 
 #define HAVERSINE_H

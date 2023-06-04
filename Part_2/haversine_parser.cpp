@@ -1,33 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "haversine_generate.h"
 #include "haversine.h"
-
-struct File_Content {
-    char *data;
-    size_t size;
-};
-
-enum Token_Type {
-    TokenType_None,
-    TokenType_String,
-    TokenType_Real,
-    TokenType_Num,
-
-    TokenType_Count,
-};
-struct Token {
-    Token_Type type;
-    union {
-        char *string;
-        float real_num;
-        int   num;
-    };
-    Token *next;
-    Token *prev;
-};
-
 
 File_Content LoadFile(char* filename) {
 
@@ -89,9 +65,13 @@ Token *TokeniseString(Memory_Arena *arena, File_Content loaded_file, int *index)
     // Allocate memory for the string and copy it.
     s32 string_size = end - start;
     char *string = (char *)ArenaAlloc(arena, string_size + 1);
+#if 0
     for (int i = 0; i < string_size; i++) {
         string[i] = loaded_file.data[start + i]; 
     }
+#else
+    strncpy(string, &loaded_file.data[start], string_size);
+#endif
     string[string_size] = '\0'; // Null-terminate the string.
 
 
@@ -107,6 +87,10 @@ Token *TokeniseString(Memory_Arena *arena, File_Content loaded_file, int *index)
     return token;
 }
 
+Token *TokeniseNumber(Memory_Arena *arena, File_Content loaded_file, int *index) {
+    return NULL;
+}
+
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         printf("Need to call exectuable with arguments: -- harversine_parser.exe (char *)<filename.json>\n");
@@ -116,25 +100,29 @@ int main(int argc, char *argv[]) {
         char *filename = argv[1];
 
         File_Content loaded_file = LoadFile(filename);
+
         Token *sentinel = (Token *)ArenaAlloc(&arena, sizeof(Token));
-        sentinel = {};
+        ZeroSize(sizeof(*sentinel), sentinel);
         sentinel->next = sentinel;
         sentinel->prev = sentinel;
 
-        Token *new_token = {};
+        Token *new_token = NULL;
         for(int index = 0; index < loaded_file.size; index++) {
             switch (loaded_file.data[index]){
                 case '"': {
                     new_token = TokeniseString(&arena, loaded_file, &index);
                 } break;
+                case '0': case '1': case '2': case '3': case '4':
+                case '5': case '6': case '7': case '8': case '9': {
+                    new_token = TokeniseNumber(&arena, loaded_file, &index);
+                } break;
             }
 
-
             if (new_token) {
-                new_token->prev = sentinel->prev;
-                new_token->next = sentinel;
+                new_token->prev      = sentinel->prev;
+                new_token->next      = sentinel;
                 sentinel->prev->next = new_token;
-                sentinel->prev = new_token;
+                sentinel->prev       = new_token;
             }
         }
 
