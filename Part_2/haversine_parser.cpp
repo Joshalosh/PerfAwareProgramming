@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "haversine_generate.h"
 #include "haversine.h"
@@ -65,13 +64,9 @@ Token *TokeniseString(Memory_Arena *arena, File_Content loaded_file, int *index)
     // Allocate memory for the string and copy it.
     s32 string_size = end - start;
     char *string = (char *)ArenaAlloc(arena, string_size + 1);
-#if 0
     for (int i = 0; i < string_size; i++) {
         string[i] = loaded_file.data[start + i]; 
     }
-#else
-    strncpy(string, &loaded_file.data[start], string_size);
-#endif
     string[string_size] = '\0'; // Null-terminate the string.
 
 
