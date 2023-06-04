@@ -4,6 +4,8 @@
 #include "haversine_generate.h"
 #include "haversine.h"
 
+#include "haversine_tokenise.cpp"
+
 File_Content LoadFile(char* filename) {
 
     File_Content result = {};
@@ -48,42 +50,6 @@ File_Content LoadFile(char* filename) {
     }
 
     return result;
-}
-
-Token *TokeniseString(Memory_Arena *arena, File_Content loaded_file, int *index) {
-    s32 start = *index + 1; // This skips the first ".
-    s32 end   = start;
-
-    // Find the end of the string
-    while (loaded_file.data[end] != '"' || (end > 0 && loaded_file.data[end - 1] == '\\')){
-        end++;
-
-        Assert(end <= loaded_file.size);
-    }
-
-    // Allocate memory for the string and copy it.
-    s32 string_size = end - start;
-    char *string = (char *)ArenaAlloc(arena, string_size + 1);
-    for (int i = 0; i < string_size; i++) {
-        string[i] = loaded_file.data[start + i]; 
-    }
-    string[string_size] = '\0'; // Null-terminate the string.
-
-
-    // Allocate and initialise a new Token
-    Token *token  = (Token *)ArenaAlloc(arena, sizeof(Token));
-    token->type   = TokenType_String;
-    token->string = string;
-    token->next   = NULL;
-    token->prev   = NULL;
-
-    *index = end;
-
-    return token;
-}
-
-Token *TokeniseNumber(Memory_Arena *arena, File_Content loaded_file, int *index) {
-    return NULL;
 }
 
 int main(int argc, char *argv[]) {
