@@ -14,7 +14,7 @@ File_Content LoadFile(char* filename) {
         printf("Failed to open file\n");
     }
     
-    if(file) {
+    if (file) {
         // Get the file size
         fseek(file, 0, SEEK_END);
         s64 file_size = ftell(file);
@@ -31,7 +31,7 @@ File_Content LoadFile(char* filename) {
             fclose(file);
         }
         
-        if(buffer) {
+        if (buffer) {
             // Read the file into the buffer
             size_t read_size = fread(buffer, 1, file_size, file);
             if (read_size != file_size) {
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
         sentinel->prev = sentinel;
 
         Token *new_token = NULL;
-        for(int index = 0; index < loaded_file.size; index++) {
+        for (int index = 0; index < loaded_file.size; index++) {
             switch (loaded_file.data[index]){
                 case '"': {
                     new_token = TokeniseString(&arena, loaded_file, &index);
