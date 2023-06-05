@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 
         Token *new_token = NULL;
         for (int index = 0; index < loaded_file.size; index++) {
-            switch (loaded_file.data[index]){
+            switch (loaded_file.data[index]) {
                 case '"': {
                     new_token = TokeniseString(&arena, loaded_file, &index);
                 } break;
