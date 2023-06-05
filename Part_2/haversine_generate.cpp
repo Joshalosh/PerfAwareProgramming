@@ -1,12 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 #include "haversine_generate.h"
-#include "haversine_math.h"
 #include "haversine_calculate.cpp"
-
-#define EARTH_RADIUS 6372.8f
 
 int main(int argc, char *argv[])
 {

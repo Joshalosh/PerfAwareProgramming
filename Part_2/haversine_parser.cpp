@@ -87,23 +87,39 @@ int main(int argc, char *argv[]) {
                 new_token->prev->next = new_token;
                 new_token->next->prev = new_token; 
             }
-
-            Token *iter_token = sentinel->next;
-            while (iter_token != sentinel) {
-                s32 index           = 0;
-                s32 point_buffer[4] = {};
-                while (index < 4 && iter_token != sentinel) {
-                    if (iter_token->type == TokenType_Real) {
-                        point_buffer[index] = iter_token->real_num;
-                        index++;
-                    }
-
-                    iter_token = iter_token->next;
-                }
-            }
         }
 
-        printf("\n Size of Token: %zu\n", sizeof(struct Token));
+        Token *iter_token = sentinel->next;
+
+        f64 average_haversine = 0;
+        s32 pair_count        = 0;
+
+        while (iter_token != sentinel) {
+            s32 index           = 0;
+            s32 point_buffer[4] = {};
+            while (index < 4 && iter_token != sentinel) {
+                if (iter_token->type == TokenType_Real) {
+                    point_buffer[index] = iter_token->real_num;
+                    index++;
+                }
+
+                iter_token = iter_token->next;
+            }
+
+            s32 x0 = point_buffer[0];
+            s32 y0 = point_buffer[1];
+            s32 x1 = point_buffer[2];
+            s32 y1 = point_buffer[3];
+            pair_count++;
+
+            f32 haversine = ReferenceHaversine(x0, y0, x1, y1, EARTH_RADIUS);
+            average_haversine += haversine;
+            iter_token = iter_token->next;
+        }
+
+        average_haversine /= pair_count;
+        printf("The number of pairs are: %d\nThe Average sum is: %f\n", pair_count, average_haversine);
+
         FreeArena(&arena);
     }
 }

@@ -1,3 +1,7 @@
+
+#include <math.h>
+#include "haversine_math.h"
+
 // EarthRadius is generally expected to be 6372.8
 static f32 ReferenceHaversine(f32 x0, f32 y0, f32 x1, f32 y1, f32 EarthRadius)
 {
