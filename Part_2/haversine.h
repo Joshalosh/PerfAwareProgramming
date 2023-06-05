@@ -54,8 +54,7 @@ void FreeArena(Memory_Arena *arena) {
 #define ZeroArray(count, pointer) ZeroSize(count*sizeof((pointer)[0]), pointer)
 void ZeroSize(size_t size, void *ptr) {
     u8 *byte = (u8 *)ptr;
-    while(size--)
-    {
+    while(size--) {
         *byte++ = 0;
     }
 }

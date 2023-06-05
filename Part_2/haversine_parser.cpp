@@ -5,6 +5,7 @@
 #include "haversine.h"
 
 #include "haversine_tokenise.cpp"
+#include "haversine_calculate.cpp"
 
 File_Content LoadFile(char* filename) {
 
@@ -73,6 +74,7 @@ int main(int argc, char *argv[]) {
                 case '"': {
                     new_token = TokeniseString(&arena, loaded_file, &index);
                 } break;
+
                 case '0': case '1': case '2': case '3': case '4':
                 case '5': case '6': case '7': case '8': case '9': case '-': {
                     new_token = TokeniseNumber(&arena, loaded_file, &index);
@@ -84,6 +86,20 @@ int main(int argc, char *argv[]) {
                 new_token->next       = sentinel;
                 new_token->prev->next = new_token;
                 new_token->next->prev = new_token; 
+            }
+
+            Token *iter_token = sentinel->next;
+            while (iter_token != sentinel) {
+                s32 index           = 0;
+                s32 point_buffer[4] = {};
+                while (index < 4 && iter_token != sentinel) {
+                    if (iter_token->type == TokenType_Real) {
+                        point_buffer[index] = iter_token->real_num;
+                        index++;
+                    }
+
+                    iter_token = iter_token->next;
+                }
             }
         }
 
