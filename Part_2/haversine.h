@@ -18,7 +18,7 @@ struct Token {
     union {
         char *string;
         float real_num;
-        int   num;
+        s32   num;
     };
     Token *next;
     Token *prev;

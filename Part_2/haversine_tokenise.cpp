@@ -35,6 +35,63 @@ Token *TokeniseString(Memory_Arena *arena, File_Content loaded_file, int *index)
     return token;
 }
 
+bool IsDigit(char c) {
+    return (c >= '0' && c<= '9');
+}
+
+s64 StringToS32(char *str){
+    s32 result = 0;
+    s8 sign    = 1;
+
+    if (*str == '-') {
+        sign = -1;
+        str++;
+    }
+
+    while(IsDigit(*str)) {
+        result = result * 10 + (*str - '0');
+        str++;
+    }
+
+    result *= sign;
+    return result;
+}
+
+float StringToFloat(char *str) {
+    float result = 0.0f;
+    float sign   = 1.0f;
+
+    if (*str == '-') {
+        sign = -1.0f;
+        str++;
+    }
+
+    while (IsDigit(*str)) {
+        // Calculate the number by subtracting the character away from '0'.
+        // '0' == 48 and 9 == 57 in ascii value, so by subtracting the current character
+        // from '0' in ascii we will get the correct number value. Then we add that answer
+        // to a power of 10 calculation to get the correct number before the decimal.
+        result = result * 10.0f + (*str - '0');
+        str++;
+    }
+
+    if (*str == '.') {
+        float fraction = 1.0f;
+        str++;
+        while (IsDigit(*str)) {
+            // After the decimal we basically do the same trick but the opposite.
+            // This time dividing by 10 and turning the current number into
+            // a fraction.
+            fraction /= 10.0f;
+            result   += (*str - '0') * fraction;
+            str++;
+        }
+    }
+
+    result *= sign;
+    return result;
+}
+
 Token *TokeniseNumber(Memory_Arena *arena, File_Content loaded_file, int *index) {
     s32 start = *index;
     s32 end = start;
@@ -44,10 +101,10 @@ Token *TokeniseNumber(Memory_Arena *arena, File_Content loaded_file, int *index)
     // Parse the number.
     while (end < loaded_file.size) {
         char c = loaded_file.data[end];
-        if (IsDigit(c)) {
-            end ++;
+        if (IsDigit(c) || c == '-') {
+            end++;
         } else if (c == '.' && !is_real) {
-            end ++;
+            end++;
             is_real = true;
         } else {
             break;
@@ -64,10 +121,18 @@ Token *TokeniseNumber(Memory_Arena *arena, File_Content loaded_file, int *index)
     Token *token = (Token *)ArenaAlloc(arena, sizeof(Token));
     if (is_real) {
         token->type = TokenType_Real;
+#if 0
         token->real_num = strtof(num_string, NULL); // Convert string to float.
+#else 
+        token->real_num = StringToFloat(num_string);
+#endif
     } else {
         token->type = TokenType_Num;
+#if 0
         token->num = strtol(num_string, NULL, 10); // Convert string to int.
+#else
+        token->num = StringToS32(num_string);
+#endif
     }
     token->next = NULL;
     token->prev = NULL;
