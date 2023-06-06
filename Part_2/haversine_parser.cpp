@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
         printf("Need to call exectuable with arguments: -- harversine_parser.exe (char *)<filename.json>\n");
     } else {
         Memory_Arena arena;
-        InitArena(&arena, 1024*1024);
+        InitArena(&arena, 1024*1024*1024);
         char *filename = argv[1];
 
         File_Content loaded_file = LoadFile(filename);
@@ -68,8 +68,8 @@ int main(int argc, char *argv[]) {
         sentinel->next = sentinel;
         sentinel->prev = sentinel;
 
-        Token *new_token = NULL;
         for (int index = 0; index < loaded_file.size; index++) {
+            Token *new_token = NULL;
             switch (loaded_file.data[index]) {
                 case '"': {
                     new_token = TokeniseString(&arena, loaded_file, &index);
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
 
         while (iter_token != sentinel) {
             s32 index           = 0;
-            s32 point_buffer[4] = {};
+            f32 point_buffer[4] = {};
             while (index < 4 && iter_token != sentinel) {
                 if (iter_token->type == TokenType_Real) {
                     point_buffer[index] = iter_token->real_num;
@@ -106,15 +106,14 @@ int main(int argc, char *argv[]) {
                 iter_token = iter_token->next;
             }
 
-            s32 x0 = point_buffer[0];
-            s32 y0 = point_buffer[1];
-            s32 x1 = point_buffer[2];
-            s32 y1 = point_buffer[3];
+            f32 x0 = point_buffer[0];
+            f32 y0 = point_buffer[1];
+            f32 x1 = point_buffer[2];
+            f32 y1 = point_buffer[3];
             pair_count++;
 
             f32 haversine = ReferenceHaversine(x0, y0, x1, y1, EARTH_RADIUS);
             average_haversine += haversine;
-            iter_token = iter_token->next;
         }
 
         average_haversine /= pair_count;
