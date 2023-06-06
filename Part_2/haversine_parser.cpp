@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
             f32 y1 = point_buffer[3];
             pair_count++;
 
-            f32 haversine = ReferenceHaversine(x0, y0, x1, y1, EARTH_RADIUS);
+            f32 haversine      = ReferenceHaversine(x0, y0, x1, y1, EARTH_RADIUS);
             average_haversine += haversine;
         }
 
