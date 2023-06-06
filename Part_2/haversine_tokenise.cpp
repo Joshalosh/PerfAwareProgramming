@@ -12,7 +12,7 @@ TokeniseString(Memory_Arena *arena, File_Content loaded_file, int *index) {
     s32 end   = start;
 
     // Find the end of the string
-    while (loaded_file.data[end] != '"' || (end > 0 && loaded_file.data[end - 1] == '\\')){
+    while (loaded_file.data[end] != '"' || (end > 0 && loaded_file.data[end - 1] == '\\')) {
         end++;
 
         Assert(end <= loaded_file.size);
@@ -43,7 +43,7 @@ IsDigit(char c) {
 }
 
 static s64 
-StringToS32(char *str){
+StringToS32(char *str) {
     s32 result = 0;
     s8 sign    = 1;
 
