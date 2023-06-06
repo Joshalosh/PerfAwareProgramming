@@ -1,11 +1,13 @@
 
-void CopyData(char *dest, File_Content source, s32 size, s32 starting_index) {
+static void 
+CopyData(char *dest, File_Content source, s32 size, s32 starting_index) {
     for (int i = 0; i < size; i++) {
         dest[i] = source.data[starting_index + i]; 
     }
 }
 
-Token *TokeniseString(Memory_Arena *arena, File_Content loaded_file, int *index) {
+static Token *
+TokeniseString(Memory_Arena *arena, File_Content loaded_file, int *index) {
     s32 start = *index + 1; // This skips the first ".
     s32 end   = start;
 
@@ -35,11 +37,13 @@ Token *TokeniseString(Memory_Arena *arena, File_Content loaded_file, int *index)
     return token;
 }
 
-bool IsDigit(char c) {
+static bool 
+IsDigit(char c) {
     return (c >= '0' && c<= '9');
 }
 
-s64 StringToS32(char *str){
+static s64 
+StringToS32(char *str){
     s32 result = 0;
     s8 sign    = 1;
 
@@ -57,7 +61,8 @@ s64 StringToS32(char *str){
     return result;
 }
 
-float StringToFloat(char *str) {
+static float 
+StringToFloat(char *str) {
     float result = 0.0f;
     float sign   = 1.0f;
 
@@ -92,7 +97,8 @@ float StringToFloat(char *str) {
     return result;
 }
 
-Token *TokeniseNumber(Memory_Arena *arena, File_Content loaded_file, int *index) {
+static Token *
+TokeniseNumber(Memory_Arena *arena, File_Content loaded_file, int *index) {
     s32 start = *index;
     s32 end = start;
 

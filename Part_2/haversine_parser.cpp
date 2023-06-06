@@ -53,7 +53,7 @@ File_Content LoadFile(char* filename) {
     return result;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char **argv) {
     if (argc < 2) {
         printf("Need to call exectuable with arguments: -- harversine_parser.exe (char *)<filename.json>\n");
     } else {
