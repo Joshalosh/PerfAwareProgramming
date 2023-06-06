@@ -75,7 +75,8 @@ StringToFloat(char *str) {
         // Calculate the number by subtracting the character away from '0'.
         // '0' == 48 and 9 == 57 in ascii value, so by subtracting the current character
         // from '0' in ascii we will get the correct number value. Then we add that answer
-        // to a power of 10 calculation to get the correct number before the decimal.
+        // to a power of 10 calculation to get the correct number before the decimal. This
+        // will run until the decimal point or null terminator is hit.
         result = result * 10.0f + (*str - '0');
         str++;
     }
@@ -86,7 +87,7 @@ StringToFloat(char *str) {
         while (IsDigit(*str)) {
             // After the decimal we basically do the same trick but the opposite.
             // This time dividing by 10 and turning the current number into
-            // a fraction.
+            // a fraction. This will run until the null terminator is hit.
             fraction /= 10.0f;
             result   += (*str - '0') * fraction;
             str++;
