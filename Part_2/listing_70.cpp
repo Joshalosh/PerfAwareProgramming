@@ -37,3 +37,13 @@ static u64 ReadOsTimer() {
 inline u64 ReadCPUTimer() {
     return __rdtsc();
 }
+
+static u64 GetCPUFreq(u64 start_counter, u64 end_counter, u64 os_elapsed) {
+
+    u64 os_freq = GetOSTimerFreq();
+
+    u64 cpu_elapsed = end_counter - start_counter;
+    u64 cpu_freq    = os_freq * cpu_elapsed / os_elapsed;
+
+    return cpu_freq;
+}
