@@ -120,6 +120,9 @@ TokeniseNumber(Memory_Arena *arena, File_Content loaded_file, int *index) {
 
     // Allocate memory for the number string and copy it.
     s32 string_size = end - start;
+    // TODO: Can have this as a stack based array instead of
+    // sitting in the arena, but it doesn't seem to help when
+    // it comes to 10 million haversine points.
     char *num_string = (char *)ArenaAlloc(arena, string_size + 1);
     CopyData(num_string, loaded_file, string_size, start);
     num_string[string_size] = '\0'; // Null-terminate the string.
