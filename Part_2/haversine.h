@@ -40,6 +40,9 @@ void *ArenaAlloc(Memory_Arena *arena, size_t size) {
     if (!(arena->current + size > arena->end)) { // Not enough space left in the arena.
         result = arena->current;
         arena->current += size;
+    } else {
+        printf("Not enough room in arena");
+        Assert(1 == 0);
     }
     
 
