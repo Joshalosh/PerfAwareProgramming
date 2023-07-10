@@ -26,12 +26,14 @@ struct Token {
 
 
 struct Memory_Arena {
+    char *start;
     char *current;
     char *end;
 };
 
 void InitArena(Memory_Arena *arena, size_t size) {
-    arena->current = (char *)malloc(size);
+    arena->start   = (char *)malloc(size);
+    arena->current = arena->start;
     arena->end     = arena->current + size;
 }
 
@@ -50,7 +52,7 @@ void *ArenaAlloc(Memory_Arena *arena, size_t size) {
 }
 
 void FreeArena(Memory_Arena *arena) {
-    free(arena->current);
+    free(arena->start);
 }
 
 #define ZeroStruct(instance) ZeroSize(sizeof(instance), &(instance))

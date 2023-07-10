@@ -6,6 +6,7 @@
 
 #include "haversine_tokenise.cpp"
 #include "haversine_calculate.cpp"
+#include "listing_70.cpp"
 
 File_Content LoadFile(char* filename) {
 
@@ -57,6 +58,10 @@ int main(int argc, char **argv) {
     if (argc < 2) {
         printf("Need to call exectuable with arguments: -- harversine_parser.exe (char *)<filename.json>\n");
     } else {
+        // Set up profiler timing variables.
+        u64 os_freq  = GetOSTimerFreq();
+        u64 os_start = ReadOSTimer();
+
         Memory_Arena arena;
         InitArena(&arena, 1024*1024*1024);
         char *filename = argv[1];
@@ -120,5 +125,10 @@ int main(int argc, char **argv) {
         printf("The number of pairs are: %d\nThe Average sum is: %f\n", pair_count, average_haversine);
 
         FreeArena(&arena);
+
+        u64 os_end     = ReadOSTimer();
+        u64 os_elapsed = os_end - os_start;
+        
+        printf("Seconds: %.4f\n", (f64)os_elapsed/os_freq); 
     }
 }
