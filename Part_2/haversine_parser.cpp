@@ -2,11 +2,11 @@
 #include <stdlib.h>
 
 #include "haversine_generate.h"
+#include "listing_70.cpp"
 #include "haversine.h"
 
 #include "haversine_tokenise.cpp"
 #include "haversine_calculate.cpp"
-#include "listing_70.cpp"
 
 File_Content LoadFile(char* filename) {
 
@@ -60,19 +60,29 @@ int main(int argc, char **argv) {
     } else {
         // Set up profiler timing variables.
         u64 os_freq  = GetOSTimerFreq();
-        u64 os_start = ReadOSTimer();
+        OS_Timer total_time;
+        StartTimer(&total_time);
 
+        OS_Timer memory_init_time;
+        StartTimer(&memory_init_time);
         Memory_Arena arena;
         InitArena(&arena, 1024*1024*1024);
+        EndTimer(&memory_init_time);
+
+        OS_Timer file_time;
+        StartTimer(&file_time);
         char *filename = argv[1];
 
         File_Content loaded_file = LoadFile(filename);
+        EndTimer(&file_time);
 
         Token *sentinel = (Token *)ArenaAlloc(&arena, sizeof(Token));
         ZeroSize(sizeof(*sentinel), sentinel);
         sentinel->next = sentinel;
         sentinel->prev = sentinel;
 
+        OS_Timer token_setup_time;
+        StartTimer(&token_setup_time);
         for (int index = 0; index < loaded_file.size; index++) {
             Token *new_token = NULL;
             switch (loaded_file.data[index]) {
@@ -93,7 +103,10 @@ int main(int argc, char **argv) {
                 new_token->next->prev = new_token; 
             }
         }
+        EndTimer(&token_setup_time);
 
+        OS_Timer token_read_time;
+        StartTimer(&token_read_time);
         Token *iter_token = sentinel->next;
 
         f64 average_haversine = 0;
@@ -120,15 +133,23 @@ int main(int argc, char **argv) {
             f32 haversine      = ReferenceHaversine(x0, y0, x1, y1, EARTH_RADIUS);
             average_haversine += haversine;
         }
+        EndTimer(&token_read_time);
 
         average_haversine /= pair_count;
-        printf("The number of pairs are: %d\nThe Average sum is: %f\n", pair_count, average_haversine);
+        printf("The number of pairs are: %d\nThe Average sum is: %f\n\n", pair_count, average_haversine);
 
+        OS_Timer free_time;
+        StartTimer(&free_time);
         FreeArena(&arena);
+        EndTimer(&free_time);
 
-        u64 os_end     = ReadOSTimer();
-        u64 os_elapsed = os_end - os_start;
+        EndTimer(&total_time);
         
-        printf("Seconds: %.4f\n", (f64)os_elapsed/os_freq); 
+        printf("Memory Init Seconds: %.4f\n", (f64)memory_init_time.elapsed/os_freq); 
+        printf("  Load File Seconds: %.4f\n", (f64)file_time.elapsed/os_freq); 
+        printf("Token Setup Seconds: %.4f\n", (f64)token_setup_time.elapsed/os_freq); 
+        printf(" Token read Seconds: %.4f\n", (f64)token_read_time.elapsed/os_freq); 
+        printf(" Free Arena Seconds: %.4f\n", (f64)free_time.elapsed/os_freq); 
+        printf("      Total Seconds: %.4f\n", (f64)total_time.elapsed/os_freq); 
     }
 }

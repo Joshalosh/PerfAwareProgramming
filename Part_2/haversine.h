@@ -31,6 +31,21 @@ struct Memory_Arena {
     char *end;
 };
 
+struct OS_Timer {
+    u64 start;
+    u64 end;
+    u64 elapsed;
+};
+
+void StartTimer(OS_Timer *timer) {
+    timer->start = ReadOSTimer();
+}
+
+void EndTimer(OS_Timer *timer) {
+    timer->end = ReadOSTimer();
+    timer->elapsed = timer->end - timer->start;
+}
+
 void InitArena(Memory_Arena *arena, size_t size) {
     arena->start   = (char *)malloc(size);
     arena->current = arena->start;
