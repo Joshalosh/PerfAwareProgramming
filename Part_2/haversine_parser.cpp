@@ -145,11 +145,15 @@ int main(int argc, char **argv) {
 
         EndTimer(&total_time);
         
-        printf("Memory Init Seconds: %.4f\n", (f64)memory_init_time.elapsed/os_freq); 
-        printf("  Load File Seconds: %.4f\n", (f64)file_time.elapsed/os_freq); 
-        printf("Token Setup Seconds: %.4f\n", (f64)token_setup_time.elapsed/os_freq); 
-        printf(" Token read Seconds: %.4f\n", (f64)token_read_time.elapsed/os_freq); 
-        printf(" Free Arena Seconds: %.4f\n", (f64)free_time.elapsed/os_freq); 
-        printf("      Total Seconds: %.4f\n", (f64)total_time.elapsed/os_freq); 
+        OS_Timer profile_print;
+        StartTimer(&profile_print);
+        printf("Memory Init Seconds: %.4f\n", (f64)memory_init_time.elapsed/(f64)os_freq); 
+        printf("  Load File Seconds: %.4f\n", (f64)file_time.elapsed/(f64)os_freq); 
+        printf("Token Setup Seconds: %.4f\n", (f64)token_setup_time.elapsed/(f64)os_freq); 
+        printf(" Token read Seconds: %.4f\n", (f64)token_read_time.elapsed/(f64)os_freq); 
+        printf(" Free Arena Seconds: %.4f\n", (f64)free_time.elapsed/(f64)os_freq); 
+        EndTimer(&profile_print);
+        printf("  Profiling Seconds: %.4f\n", (f64)profile_print.elapsed/(f64)os_freq);
+        printf("      Total Seconds: %.4f\n", (f64)total_time.elapsed/(f64)os_freq); 
     }
 }
