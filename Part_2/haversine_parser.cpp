@@ -162,6 +162,7 @@ int main(int argc, char **argv) {
         
         OS_Timer profile_print;
         StartTimer(&profile_print);
+        printf("      Total Seconds: %.4f\n\n", (f64)total_time.elapsed/(f64)os_freq); 
         printf("Memory Init Seconds: %.4f\n", (f64)memory_init_time.elapsed/(f64)os_freq); 
         printf("  Load File Seconds: %.4f\n", (f64)file_time.elapsed/(f64)os_freq); 
         printf("Token Setup Seconds: %.4f\n", (f64)token_setup_time.elapsed/(f64)os_freq); 
@@ -169,6 +170,5 @@ int main(int argc, char **argv) {
         printf("Free Memory Seconds: %.4f\n", (f64)free_time.elapsed/(f64)os_freq); 
         EndTimer(&profile_print);
         printf("  Profiling Seconds: %.4f\n", (f64)profile_print.elapsed/(f64)os_freq);
-        printf("      Total Seconds: %.4f\n", (f64)total_time.elapsed/(f64)os_freq); 
     }
 }
