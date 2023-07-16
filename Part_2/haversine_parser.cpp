@@ -8,6 +8,7 @@
 #include "haversine_tokenise.cpp"
 #include "haversine_calculate.cpp"
 
+
 File_Content LoadFile(char* filename) {
 
     File_Content result = {};
@@ -65,8 +66,10 @@ int main(int argc, char **argv) {
 
         OS_Timer memory_init_time;
         StartTimer(&memory_init_time);
+#if CUSTOM_MEMORY
         Memory_Arena arena;
         InitArena(&arena, 1024*1024*1024);
+#endif
         EndTimer(&memory_init_time);
 
         OS_Timer file_time;
@@ -76,8 +79,12 @@ int main(int argc, char **argv) {
         File_Content loaded_file = LoadFile(filename);
         EndTimer(&file_time);
 
+#if CUSTOM_MEMORY
         Token *sentinel = (Token *)ArenaAlloc(&arena, sizeof(Token));
         ZeroSize(sizeof(*sentinel), sentinel);
+#else
+        Token *sentinel = (Token *)calloc(1, sizeof(Token));
+#endif
         sentinel->next = sentinel;
         sentinel->prev = sentinel;
 
@@ -87,12 +94,16 @@ int main(int argc, char **argv) {
             Token *new_token = NULL;
             switch (loaded_file.data[index]) {
                 case '"': {
-                    new_token = TokeniseString(&arena, loaded_file, &index);
+                    IgnoreString(loaded_file, &index);
                 } break;
 
                 case '0': case '1': case '2': case '3': case '4':
                 case '5': case '6': case '7': case '8': case '9': case '-': {
+#if CUSTOM_MEMORY
                     new_token = TokeniseNumber(&arena, loaded_file, &index);
+#else 
+                    new_token = TokeniseNumber(loaded_file, &index);
+#endif
                 } break;
             }
 
@@ -140,7 +151,11 @@ int main(int argc, char **argv) {
 
         OS_Timer free_time;
         StartTimer(&free_time);
+#if CUSTOM_MEMORY
         FreeArena(&arena);
+#else 
+        FreeTokens(sentinel);
+#endif
         EndTimer(&free_time);
 
         EndTimer(&total_time);
@@ -151,7 +166,7 @@ int main(int argc, char **argv) {
         printf("  Load File Seconds: %.4f\n", (f64)file_time.elapsed/(f64)os_freq); 
         printf("Token Setup Seconds: %.4f\n", (f64)token_setup_time.elapsed/(f64)os_freq); 
         printf(" Token read Seconds: %.4f\n", (f64)token_read_time.elapsed/(f64)os_freq); 
-        printf(" Free Arena Seconds: %.4f\n", (f64)free_time.elapsed/(f64)os_freq); 
+        printf("Free Memory Seconds: %.4f\n", (f64)free_time.elapsed/(f64)os_freq); 
         EndTimer(&profile_print);
         printf("  Profiling Seconds: %.4f\n", (f64)profile_print.elapsed/(f64)os_freq);
         printf("      Total Seconds: %.4f\n", (f64)total_time.elapsed/(f64)os_freq); 
