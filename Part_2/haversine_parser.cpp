@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
         StartTimer(&memory_init_time);
 #if CUSTOM_MEMORY
         Memory_Arena arena;
-        InitArena(&arena, 1024*1024*1024);
+        InitArena(&arena, 1024ULL*1024*1024*2);
 #endif
         EndTimer(&memory_init_time);
 
