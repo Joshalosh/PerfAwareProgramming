@@ -159,7 +159,8 @@ int main(int argc, char **argv) {
         EndTimer(&free_time);
 
         EndTimer(&total_time);
-        
+        TIMED_BLOCK("Timings");
+        {
         OS_Timer profile_print;
         StartTimer(&profile_print);
         printf("      Total Seconds: %.4f\n\n", (f64)total_time.elapsed/(f64)os_freq); 
@@ -170,5 +171,6 @@ int main(int argc, char **argv) {
         printf("Free Memory Seconds: %.4f\n", (f64)free_time.elapsed/(f64)os_freq); 
         EndTimer(&profile_print);
         printf("  Profiling Seconds: %.4f\n", (f64)profile_print.elapsed/(f64)os_freq);
+        }
     }
 }
