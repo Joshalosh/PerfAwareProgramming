@@ -8,6 +8,8 @@
 #include "haversine_tokenise.cpp"
 #include "haversine_calculate.cpp"
 
+cpu_frequency = GetCPUFreq();
+
 
 File_Content LoadFile(char* filename) {
 

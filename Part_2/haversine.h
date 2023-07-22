@@ -81,7 +81,7 @@ void ZeroSize(size_t size, void *ptr) {
 
 
 #define TIMED_BLOCK(BlockName) \
-    timed_block TimedBlock_##__LINE__(__rdtsc(), BlockName)
+    timed_block TimedBlock_##__LINE__(__rdtsc(), Frequency, BlockName)
 
 struct timed_block
 {
