@@ -8,9 +8,6 @@
 #include "haversine_tokenise.cpp"
 #include "haversine_calculate.cpp"
 
-cpu_frequency = GetCPUFreq();
-
-
 File_Content LoadFile(char* filename) {
 
     File_Content result = {};
@@ -65,6 +62,8 @@ int main(int argc, char **argv) {
         u64 os_freq  = GetOSTimerFreq();
         OS_Timer total_time;
         StartTimer(&total_time);
+
+        u64 start_count = ReadOSTimer();
 
         OS_Timer memory_init_time;
         StartTimer(&memory_init_time);
@@ -159,6 +158,11 @@ int main(int argc, char **argv) {
         FreeTokens(sentinel);
 #endif
         EndTimer(&free_time);
+
+        u64 end_count = ReadOSTimer();
+        u64 os_elapsed = end_count - start_count;
+
+        u64 Frequency = GetCPUFreq(start_count, end_count, os_elapsed);
 
         EndTimer(&total_time);
         TIMED_BLOCK("Timings");
