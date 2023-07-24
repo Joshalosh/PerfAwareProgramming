@@ -81,16 +81,15 @@ void ZeroSize(size_t size, void *ptr) {
 
 
 #define TIMED_BLOCK(BlockName) \
-    timed_block TimedBlock_##__LINE__(__rdtsc(), Frequency, BlockName)
+    timed_block TimedBlock_##__LINE__(__rdtsc(), BlockName)
 
 struct timed_block
 {
     u64 start_time;
-    u64 cpu_frequency;
     char *block_name;
 
-    timed_block(u64 start, u64 frequency, char *name)
-        : start_time(start), cpu_frequency(frequency), block_name(name)
+    timed_block(u64 start, char *name)
+        : start_time(start), block_name(name)
     {
     }
 
@@ -98,7 +97,8 @@ struct timed_block
     {
         u64 end_time = __rdtsc();
         u64 elapsed_cycles = end_time - start_time;
-        double elapsed_seconds = (double)elapsed_cycles / (double)cpu_frequency;
+        u64 cpu_frequency = GetCPUFreq(start_time, end_time, elapsed_cycles);
+        f64 elapsed_seconds = (f64)elapsed_cycles / (f64)cpu_frequency;
         printf("Block '%s' took %f seconds\n", block_name, elapsed_seconds);
     }
 };

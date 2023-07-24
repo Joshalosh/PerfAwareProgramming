@@ -63,8 +63,6 @@ int main(int argc, char **argv) {
         OS_Timer total_time;
         StartTimer(&total_time);
 
-        u64 start_count = ReadOSTimer();
-
         OS_Timer memory_init_time;
         StartTimer(&memory_init_time);
 #if CUSTOM_MEMORY
@@ -159,14 +157,10 @@ int main(int argc, char **argv) {
 #endif
         EndTimer(&free_time);
 
-        u64 end_count = ReadOSTimer();
-        u64 os_elapsed = end_count - start_count;
-
-        u64 Frequency = GetCPUFreq(start_count, end_count, os_elapsed);
 
         EndTimer(&total_time);
-        TIMED_BLOCK("Timings");
         {
+        TIMED_BLOCK("Timings");
         OS_Timer profile_print;
         StartTimer(&profile_print);
         printf("      Total Seconds: %.4f\n\n", (f64)total_time.elapsed/(f64)os_freq); 
