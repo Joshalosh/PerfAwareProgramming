@@ -38,12 +38,28 @@ inline u64 ReadCPUTimer() {
     return __rdtsc();
 }
 
-static u64 GetCPUFreq(u64 start_counter, u64 end_counter, u64 os_elapsed) {
+static u64 GetCPUFreq() {
 
-    u64 os_freq = GetOSTimerFreq();
+    u64 milliseconds_to_wait = 100;
+    u64 os_freq      = GetOSTimerFreq();
 
-    u64 cpu_elapsed = end_counter - start_counter;
-    u64 cpu_freq    = os_freq * cpu_elapsed / os_elapsed;
+    u64 cpu_start    = ReadCPUTimer();
+    u64 os_start     = ReadOSTimer();
+    u64 os_end       = 0;
+    u64 os_elapsed   = 0;
+    u64 os_wait_time = os_freq * milliseconds_to_wait / 1000;
+    while (os_elapsed < os_wait_time) {
+        os_end = ReadOSTimer();
+        os_elapsed = os_end - os_start;
+    }
+
+    u64 cpu_end = ReadCPUTimer();
+    u64 cpu_elapsed = cpu_end - cpu_start;
+
+    u64 cpu_freq = 0;
+    if (os_elapsed) {
+        cpu_freq = os_freq * cpu_elapsed / os_elapsed;
+    }
 
     return cpu_freq;
 }

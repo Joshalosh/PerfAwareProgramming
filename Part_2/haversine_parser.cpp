@@ -60,10 +60,10 @@ int main(int argc, char **argv) {
     } else {
         // Set up profiler timing variables.
         u64 os_freq  = GetOSTimerFreq();
-        OS_Timer total_time;
+        Timings total_time;
         StartTimer(&total_time);
 
-        OS_Timer memory_init_time;
+        Timings memory_init_time;
         StartTimer(&memory_init_time);
 #if CUSTOM_MEMORY
         Memory_Arena arena;
@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 #endif
         EndTimer(&memory_init_time);
 
-        OS_Timer file_time;
+        Timings file_time;
         StartTimer(&file_time);
         char *filename = argv[1];
 
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
         sentinel->next = sentinel;
         sentinel->prev = sentinel;
 
-        OS_Timer token_setup_time;
+        Timings token_setup_time;
         StartTimer(&token_setup_time);
         for (int index = 0; index < loaded_file.size; index++) {
             Token *new_token = NULL;
@@ -110,12 +110,12 @@ int main(int argc, char **argv) {
                 new_token->prev       = sentinel->prev;
                 new_token->next       = sentinel;
                 new_token->prev->next = new_token;
-                new_token->next->prev = new_token; 
+                new_token->next->prev = new_token;
             }
         }
         EndTimer(&token_setup_time);
 
-        OS_Timer token_read_time;
+        Timings token_read_time;
         StartTimer(&token_read_time);
         Token *iter_token = sentinel->next;
 
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
         average_haversine /= pair_count;
         printf("The number of pairs are: %d\nThe Average sum is: %f\n\n", pair_count, average_haversine);
 
-        OS_Timer free_time;
+        Timings free_time;
         StartTimer(&free_time);
 #if CUSTOM_MEMORY
         FreeArena(&arena);
@@ -158,19 +158,19 @@ int main(int argc, char **argv) {
         EndTimer(&free_time);
 
 
+        u64 cpu_freq = GetCPUFreq();
+
         EndTimer(&total_time);
-        {
-        TIMED_BLOCK("Timings");
-        OS_Timer profile_print;
+
+        Timings profile_print;
         StartTimer(&profile_print);
-        printf("      Total Seconds: %.4f\n\n", (f64)total_time.elapsed/(f64)os_freq); 
-        printf("Memory Init Seconds: %.4f\n", (f64)memory_init_time.elapsed/(f64)os_freq); 
-        printf("  Load File Seconds: %.4f\n", (f64)file_time.elapsed/(f64)os_freq); 
-        printf("Token Setup Seconds: %.4f\n", (f64)token_setup_time.elapsed/(f64)os_freq); 
-        printf(" Token read Seconds: %.4f\n", (f64)token_read_time.elapsed/(f64)os_freq); 
-        printf("Free Memory Seconds: %.4f\n", (f64)free_time.elapsed/(f64)os_freq); 
+        printf("      Total Seconds: %.4fms\n\n", (f64)total_time.elapsed/(f64)cpu_freq); 
+        printf("Memory Init Seconds: %.4fms\n", (f64)memory_init_time.elapsed/(f64)cpu_freq); 
+        printf("  Load File Seconds: %.4fms\n", (f64)file_time.elapsed/(f64)cpu_freq); 
+        printf("Token Setup Seconds: %.4fms\n", (f64)token_setup_time.elapsed/(f64)cpu_freq); 
+        printf(" Token read Seconds: %.4fms\n", (f64)token_read_time.elapsed/(f64)cpu_freq); 
+        printf("Free Memory Seconds: %.4fms\n", (f64)free_time.elapsed/(f64)cpu_freq); 
         EndTimer(&profile_print);
-        printf("  Profiling Seconds: %.4f\n", (f64)profile_print.elapsed/(f64)os_freq);
-        }
+        printf("  Profiling Seconds: %.4fms\n", (f64)profile_print.elapsed/(f64)cpu_freq);
     }
 }

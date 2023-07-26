@@ -31,18 +31,18 @@ struct Memory_Arena {
     char *end;
 };
 
-struct OS_Timer {
+struct Timings {
     u64 start;
     u64 end;
     u64 elapsed;
 };
 
-void StartTimer(OS_Timer *timer) {
-    timer->start = ReadOSTimer();
+void StartTimer(Timings *timer) {
+    timer->start = ReadCPUTimer();
 }
 
-void EndTimer(OS_Timer *timer) {
-    timer->end = ReadOSTimer();
+void EndTimer(Timings *timer) {
+    timer->end = ReadCPUTimer();
     timer->elapsed = timer->end - timer->start;
 }
 
@@ -79,7 +79,38 @@ void ZeroSize(size_t size, void *ptr) {
     }
 }
 
+#if 0
+struct Profile_Anchor
+{
+    u64 tsc_elapsed;
+    u64 hit_count;
+    char const *label;
+};
 
+struct Profiler 
+{
+    Profile_Achor anchors[4096];
+
+    u64 start_tsc;
+    u64 end_tsc;
+};
+static Profiler global_profiler;
+
+struct Profile_Block
+{
+    profile_block(char const *label_, u32 anchor_index_)
+    {
+        anchor_index = anchor_index_;
+        label = label_;
+        start_tsc = ReadCPUTimer();
+    }
+
+    ~profile_block()
+};
+#endif
+
+
+#if 0
 #define TIMED_BLOCK(BlockName) \
     timed_block TimedBlock_##__LINE__(__rdtsc(), BlockName)
 
@@ -102,6 +133,7 @@ struct timed_block
         printf("Block '%s' took %f seconds\n", block_name, elapsed_seconds);
     }
 };
+#endif
 
 #define HAVERSINE_H
 #endif
