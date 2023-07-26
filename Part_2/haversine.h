@@ -79,7 +79,6 @@ void ZeroSize(size_t size, void *ptr) {
     }
 }
 
-#if 0
 struct Profile_Anchor
 {
     u64 tsc_elapsed;
@@ -89,7 +88,7 @@ struct Profile_Anchor
 
 struct Profiler 
 {
-    Profile_Achor anchors[4096];
+    Profile_Anchor anchors[4096];
 
     u64 start_tsc;
     u64 end_tsc;
@@ -98,17 +97,68 @@ static Profiler global_profiler;
 
 struct Profile_Block
 {
-    profile_block(char const *label_, u32 anchor_index_)
+    Profile_Block(char const *label_, u32 anchor_index_)
     {
         anchor_index = anchor_index_;
         label = label_;
         start_tsc = ReadCPUTimer();
     }
 
-    ~profile_block()
-};
-#endif
+    ~Profile_Block()
+    {
+        u64 elapsed = ReadCPUTimer() - start_tsc;
 
+        Profile_Anchor *anchor = global_profiler.anchors + anchor_index;
+        anchor->tsc_elapsed   += elapsed;
+        ++anchor->hit_count;
+
+        // This write happens every time solely because there is no 
+        // straightforward way in C++ to have the same ease-of-use.
+        // In a better programming language, it would be simple to have 
+        // the anchor points gathered and labeled at compile time, and 
+        // this repetative write would be eliminated.
+        anchor->label = label;
+    }
+
+    char const *label;
+    u64 start_tsc;
+    u32 anchor_index;
+};
+
+#define NameConcat2(a, b) a##b 
+#define NameConcat(a, b) NameConcat2(a, b)
+#define TimeBlock(name) Profile_Block NameConcat(block, __LINE__)(name, __COUNTER__ + 1);
+#define TimeFunction TimeBlock(__func__)
+
+static void PrintTimeElapsed(u64 total_tsc_elapsed, Profile_Anchor *anchor) {
+    u64 elapsed = anchor->tsc_elapsed;
+    f64 percent = 100.0 * ((f64)elapsed / (f64)total_tsc_elapsed);
+    printf("  %s[%llu]: %llu (%.2f%%)\n", anchor->label, anchor->hit_count, elapsed, percent);
+}
+
+static void BeginProfile() {
+    global_profiler.start_tsc = ReadCPUTimer();
+}
+
+static void EndAndPrintProfile() {
+    global_profiler.end_tsc = ReadCPUTimer();
+    u64 cpu_freq = GetCPUFreq();
+
+    u64 total_cpu_elapsed = global_profiler.end_tsc - global_profiler.start_tsc;
+
+    if (cpu_freq) {
+        printf("\nTotal time: %0.4fms (CPU freq %llu)\n", 
+               1000.0 * (f64)total_cpu_elapsed / (f64)cpu_freq, cpu_freq);
+    }
+
+    for (u32 anchor_index = 0; anchor_index < ArrayCount(global_profiler.anchors); ++anchor_index)
+    {
+        Profile_Anchor *anchor = global_profiler.anchors + anchor_index;
+        if (anchor->tsc_elapsed) {
+            PrintTimeElapsed(total_cpu_elapsed, anchor);
+        }
+    }
+}
 
 #if 0
 #define TIMED_BLOCK(BlockName) \
