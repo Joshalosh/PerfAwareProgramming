@@ -144,12 +144,12 @@ struct Profile_Block
 static void PrintTimeElapsed(u64 total_tsc_elapsed, Profile_Anchor *anchor) {
     u64 elapsed = anchor->tsc_elapsed - anchor->tsc_elapsed_children;
     f64 percent = 100.0 * ((f64)elapsed / (f64)total_tsc_elapsed);
-    printf("  %s[%llu]: %llu (%.2f%%)\n", anchor->label, anchor->hit_count, elapsed, percent);
+    printf("  %s[%llu]: %llu (%.2f%%", anchor->label, anchor->hit_count, elapsed, percent);
     if (anchor->tsc_elapsed_children) {
         f64 percent_with_children = 100.0 * ((f64)anchor->tsc_elapsed / (f64)total_tsc_elapsed);
-        printf("  %.2f%% w/children\n", percent_with_children);
+        printf(", %.2f%% w/children", percent_with_children);
     }
-    //printf(")\n");
+    printf(")\n");
 }
 
 static void BeginProfile() {
