@@ -9,6 +9,7 @@
 #include "haversine_calculate.cpp"
 
 File_Content LoadFile(char* filename) {
+    TimeFunction;
 
     File_Content result = {};
     FILE* file = fopen(filename, "rb");
@@ -58,6 +59,7 @@ int main(int argc, char **argv) {
     if (argc < 2) {
         printf("Need to call exectuable with arguments: -- harversine_parser.exe (char *)<filename.json>\n");
     } else {
+        BeginProfile();
         // Set up profiler timing variables.
         u64 os_freq  = GetOSTimerFreq();
         Timings total_time;
@@ -157,20 +159,24 @@ int main(int argc, char **argv) {
 #endif
         EndTimer(&free_time);
 
-
         u64 cpu_freq = GetCPUFreq();
 
         EndTimer(&total_time);
 
+        EndAndPrintProfile();
+#if 0
         Timings profile_print;
         StartTimer(&profile_print);
-        printf("      Total Seconds: %.4fms\n\n", (f64)total_time.elapsed/(f64)cpu_freq); 
-        printf("Memory Init Seconds: %.4fms\n", (f64)memory_init_time.elapsed/(f64)cpu_freq); 
-        printf("  Load File Seconds: %.4fms\n", (f64)file_time.elapsed/(f64)cpu_freq); 
-        printf("Token Setup Seconds: %.4fms\n", (f64)token_setup_time.elapsed/(f64)cpu_freq); 
-        printf(" Token read Seconds: %.4fms\n", (f64)token_read_time.elapsed/(f64)cpu_freq); 
-        printf("Free Memory Seconds: %.4fms\n", (f64)free_time.elapsed/(f64)cpu_freq); 
+        printf("      Total Seconds: %.4fms\n\n", (f64)total_time.elapsed/(f64)cpu_freq);
+        printf("Memory Init Seconds: %.4fms\n", (f64)memory_init_time.elapsed/(f64)cpu_freq);
+        printf("  Load File Seconds: %.4fms\n", (f64)file_time.elapsed/(f64)cpu_freq);
+        printf("Token Setup Seconds: %.4fms\n", (f64)token_setup_time.elapsed/(f64)cpu_freq);
+        printf(" Token Read Seconds: %.4fms\n", (f64)token_read_time.elapsed/(f64)cpu_freq);
+        printf("Free Memory Seconds: %.4fms\n", (f64)free_time.elapsed/(f64)cpu_freq);
         EndTimer(&profile_print);
         printf("  Profiling Seconds: %.4fms\n", (f64)profile_print.elapsed/(f64)cpu_freq);
+#endif
     }
 }
+
+static_assert(__COUNTER__ < ArrayCount(Profiler::anchors), "Number of profile points exceeds size of Profiler::anchors array");
