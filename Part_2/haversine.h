@@ -83,6 +83,7 @@ struct Profile_Anchor
 {
     u64 tsc_elapsed;
     u64 tsc_elapsed_children;
+    u64 tsc_elapsed_at_root;
     u64 hit_count;
     char const *label;
 };
@@ -106,6 +107,9 @@ struct Profile_Block
         anchor_index = anchor_index_;
         label        = label_;
 
+        Profile_Anchor *anchor  = global_profiler.anchors + anchor_index;
+        old_tsc_elapsed_at_root = anchor->tsc_elapsed_at_root;
+
         global_profiler_parent = anchor_index;
         start_tsc              = ReadCPUTimer();
     }
@@ -119,6 +123,7 @@ struct Profile_Block
         Profile_Anchor *anchor = global_profiler.anchors + anchor_index;
 
         parent->tsc_elapsed_children += elapsed;
+        anchor->tsc_elapsed_at_root   = old_tsc_elapsed_at_root + elapsed;
         anchor->tsc_elapsed          += elapsed;
         ++anchor->hit_count;
 
@@ -131,6 +136,7 @@ struct Profile_Block
     }
 
     char const *label;
+    u64 old_tsc_elapsed_at_root;
     u64 start_tsc;
     u32 parent_index;
     u32 anchor_index;
@@ -142,11 +148,11 @@ struct Profile_Block
 #define TimeFunction TimeBlock(__func__)
 
 static void PrintTimeElapsed(u64 total_tsc_elapsed, Profile_Anchor *anchor) {
-    u64 elapsed = anchor->tsc_elapsed - anchor->tsc_elapsed_children;
-    f64 percent = 100.0 * ((f64)elapsed / (f64)total_tsc_elapsed);
-    printf("  %s[%llu]: %llu (%.2f%%", anchor->label, anchor->hit_count, elapsed, percent);
-    if (anchor->tsc_elapsed_children) {
-        f64 percent_with_children = 100.0 * ((f64)anchor->tsc_elapsed / (f64)total_tsc_elapsed);
+    u64 tsc_elapsed_self = anchor->tsc_elapsed - anchor->tsc_elapsed_children;
+    f64 percent = 100.0 * ((f64)tsc_elapsed_self / (f64)total_tsc_elapsed);
+    printf("  %s[%llu]: %llu (%.2f%%", anchor->label, anchor->hit_count, tsc_elapsed_self, percent);
+    if (anchor->tsc_elapsed_at_root != tsc_elapsed_self) {
+        f64 percent_with_children = 100.0 * ((f64)anchor->tsc_elapsed_at_root / (f64)total_tsc_elapsed);
         printf(", %.2f%% w/children", percent_with_children);
     }
     printf(")\n");
