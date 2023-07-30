@@ -135,9 +135,9 @@ int main(int argc, char **argv) {
                 f32 haversine      = ReferenceHaversine(x0, y0, x1, y1, EARTH_RADIUS);
                 average_haversine += haversine;
             }
+            average_haversine /= pair_count;
         }
 
-        average_haversine /= pair_count;
         printf("The number of pairs are: %d\nThe Average sum is: %f\n\n", pair_count, average_haversine);
 
 #if CUSTOM_MEMORY
