@@ -17,6 +17,7 @@ typedef uint64_t u64;
 #define EARTH_RADIUS 6372.8f
 
 #define CUSTOM_MEMORY 1
+#define PROFILER 1
 
 #define ArrayCount(array) (sizeof(array) / sizeof((array)[0]))
 #define Assert(expression) if(!(expression)) {*(int *)0 = 0;}

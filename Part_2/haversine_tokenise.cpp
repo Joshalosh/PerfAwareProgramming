@@ -1,7 +1,6 @@
 
 static void 
 CopyData(char *dest, File_Content source, s32 size, s32 starting_index) {
-    TimeFunction;
     for (int i = 0; i < size; i++) {
         dest[i] = source.data[starting_index + i]; 
     }
@@ -9,7 +8,6 @@ CopyData(char *dest, File_Content source, s32 size, s32 starting_index) {
 
 static Token *
 TokeniseString(Memory_Arena *arena, File_Content loaded_file, int *index) {
-    TimeFunction;
     s32 start = *index + 1; // This skips the first ".
     s32 end   = start;
 
@@ -41,7 +39,6 @@ TokeniseString(Memory_Arena *arena, File_Content loaded_file, int *index) {
 
 static void
 IgnoreString(File_Content loaded_file, int *index) {
-    TimeFunction;
     s32 start = *index + 1; // This skips the first ".
     s32 end   = start;
 
@@ -57,7 +54,6 @@ IgnoreString(File_Content loaded_file, int *index) {
 
 static bool 
 IsDigit(char c) {
-    TimeFunction;
     return (c >= '0' && c<= '9');
 }
 
@@ -82,7 +78,6 @@ StringToS32(char *str) {
 
 static float 
 StringToFloat(char *str) {
-    TimeFunction;
     float result = 0.0f;
     float sign   = 1.0f;
 
@@ -120,7 +115,6 @@ StringToFloat(char *str) {
 
 static float 
 StringToFloat(char *str, s32 string_size) {
-    TimeFunction;
     float result = 0.0f;
     float sign   = 1.0f;
     s32 count    = 0;
@@ -162,7 +156,6 @@ StringToFloat(char *str, s32 string_size) {
 
 static Token *
 TokeniseNumber(Memory_Arena *arena, File_Content loaded_file, int *index) {
-    TimeFunction;
     s32 start = *index;
     s32 end = start;
 

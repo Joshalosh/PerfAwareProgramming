@@ -3,10 +3,8 @@
 
 #include "haversine_generate.h"
 #include "haversine.h"
+
 #include "profiler.h"
-
-#define PROFILER 1
-
 #include "haversine_tokenise.cpp"
 #include "haversine_calculate.cpp"
 
@@ -62,7 +60,6 @@ int main(int argc, char **argv) {
         printf("Need to call exectuable with arguments: -- harversine_parser.exe (char *)<filename.json>\n");
     } else {
         BeginProfile();
-        // Set up profiler timing variables.
 
 #if CUSTOM_MEMORY
         Memory_Arena arena;
@@ -79,31 +76,34 @@ int main(int argc, char **argv) {
 #else
         Token *sentinel = (Token *)calloc(1, sizeof(Token));
 #endif
-        sentinel->next = sentinel;
-        sentinel->prev = sentinel;
+        {
+            TimeBlock("Tokenise");
+            sentinel->next = sentinel;
+            sentinel->prev = sentinel;
 
-        for (int index = 0; index < loaded_file.size; index++) {
-            Token *new_token = NULL;
-            switch (loaded_file.data[index]) {
-                case '"': {
-                    IgnoreString(loaded_file, &index);
-                } break;
+            for (int index = 0; index < loaded_file.size; index++) {
+                Token *new_token = NULL;
+                switch (loaded_file.data[index]) {
+                    case '"': {
+                        IgnoreString(loaded_file, &index);
+                    } break;
 
-                case '0': case '1': case '2': case '3': case '4':
-                case '5': case '6': case '7': case '8': case '9': case '-': {
+                    case '0': case '1': case '2': case '3': case '4':
+                    case '5': case '6': case '7': case '8': case '9': case '-': {
 #if CUSTOM_MEMORY
-                    new_token = TokeniseNumber(&arena, loaded_file, &index);
+                        new_token = TokeniseNumber(&arena, loaded_file, &index);
 #else 
-                    new_token = TokeniseNumber(loaded_file, &index);
+                        new_token = TokeniseNumber(loaded_file, &index);
 #endif
-                } break;
-            }
+                    } break;
+                }
 
-            if (new_token) {
-                new_token->prev       = sentinel->prev;
-                new_token->next       = sentinel;
-                new_token->prev->next = new_token;
-                new_token->next->prev = new_token;
+                if (new_token) {
+                    new_token->prev       = sentinel->prev;
+                    new_token->next       = sentinel;
+                    new_token->prev->next = new_token;
+                    new_token->next->prev = new_token;
+                }
             }
         }
 
@@ -112,35 +112,44 @@ int main(int argc, char **argv) {
         f64 average_haversine = 0;
         s32 pair_count        = 0;
 
-        while (iter_token != sentinel) {
-            s32 index           = 0;
-            f32 point_buffer[4] = {};
-            while (index < 4 && iter_token != sentinel) {
-                if (iter_token->type == TokenType_Real) {
-                    point_buffer[index] = iter_token->real_num;
-                    index++;
+        {
+            TimeBlock("ComputeHaversinePairs");
+            while (iter_token != sentinel) {
+                s32 index           = 0;
+                f32 point_buffer[4] = {};
+                while (index < 4 && iter_token != sentinel) {
+                    if (iter_token->type == TokenType_Real) {
+                        point_buffer[index] = iter_token->real_num;
+                        index++;
+                    }
+
+                    iter_token = iter_token->next;
                 }
 
-                iter_token = iter_token->next;
+                f32 x0 = point_buffer[0];
+                f32 y0 = point_buffer[1];
+                f32 x1 = point_buffer[2];
+                f32 y1 = point_buffer[3];
+                pair_count++;
+
+                f32 haversine      = ReferenceHaversine(x0, y0, x1, y1, EARTH_RADIUS);
+                average_haversine += haversine;
             }
-
-            f32 x0 = point_buffer[0];
-            f32 y0 = point_buffer[1];
-            f32 x1 = point_buffer[2];
-            f32 y1 = point_buffer[3];
-            pair_count++;
-
-            f32 haversine      = ReferenceHaversine(x0, y0, x1, y1, EARTH_RADIUS);
-            average_haversine += haversine;
         }
 
         average_haversine /= pair_count;
         printf("The number of pairs are: %d\nThe Average sum is: %f\n\n", pair_count, average_haversine);
 
 #if CUSTOM_MEMORY
-        FreeArena(&arena);
+        {
+            TimeBlock("FreeArena");
+            FreeArena(&arena);
+        }
 #else 
-        FreeTokens(sentinel);
+        {
+            TimeBlock("FreeMemory");
+            FreeTokens(sentinel);
+        }
 #endif
 
         EndAndPrintProfile();

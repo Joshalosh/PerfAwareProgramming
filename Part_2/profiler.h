@@ -15,7 +15,7 @@ struct Profile_Anchor
     u64 hit_count;
     char const *label;
 };
-static profile_anchor global_profiler_anchors[4096];
+static Profile_Anchor global_profiler_anchors[4096];
 static u32 global_profiler_parent;
 
 struct Profile_Block
@@ -65,7 +65,7 @@ struct Profile_Block
 #define NameConcat2(a, b) a##b 
 #define NameConcat(a, b) NameConcat2(a, b)
 #define TimeBlock(name) Profile_Block NameConcat(block, __LINE__)(name, __COUNTER__ + 1);
-#define ProfilerEndOfCompilationUnit static_assert(__COUNTER__ < ArrayCount(global_profiler__anchors), "Number of profile points exceeds size of Profiler::anchors array")
+#define ProfilerEndOfCompilationUnit static_assert(__COUNTER__ < ArrayCount(global_profiler_anchors), "Number of profile points exceeds size of Profiler::anchors array")
 
 static void PrintTimeElapsed(u64 total_tsc_elapsed, Profile_Anchor *anchor) {
     f64 percent = 100.0 * ((f64)anchor->tsc_elapsed_exclusive / (f64)total_tsc_elapsed);
@@ -79,7 +79,7 @@ static void PrintTimeElapsed(u64 total_tsc_elapsed, Profile_Anchor *anchor) {
 
 static void PrintAnchorData(u64 total_cpu_elapsed) {
     for (u32 anchor_index = 0; anchor_index < ArrayCount(global_profiler_anchors); ++anchor_index) {
-        profile_anchor *anchor = global_profiler_anchors + anchor_index;
+        Profile_Anchor *anchor = global_profiler_anchors + anchor_index;
         if (anchor->tsc_elapsed_inclusive) {
             PrintTimeElapsed(total_cpu_elapsed, anchor);
         }
