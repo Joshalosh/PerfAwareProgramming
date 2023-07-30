@@ -2,8 +2,10 @@
 #include <stdlib.h>
 
 #include "haversine_generate.h"
-#include "listing_70.cpp"
 #include "haversine.h"
+#include "profiler.h"
+
+#define PROFILER 1
 
 #include "haversine_tokenise.cpp"
 #include "haversine_calculate.cpp"
@@ -61,24 +63,15 @@ int main(int argc, char **argv) {
     } else {
         BeginProfile();
         // Set up profiler timing variables.
-        u64 os_freq  = GetOSTimerFreq();
-        Timings total_time;
-        StartTimer(&total_time);
 
-        Timings memory_init_time;
-        StartTimer(&memory_init_time);
 #if CUSTOM_MEMORY
         Memory_Arena arena;
         InitArena(&arena, 1024ULL*1024*1024*2);
 #endif
-        EndTimer(&memory_init_time);
 
-        Timings file_time;
-        StartTimer(&file_time);
         char *filename = argv[1];
 
         File_Content loaded_file = LoadFile(filename);
-        EndTimer(&file_time);
 
 #if CUSTOM_MEMORY
         Token *sentinel = (Token *)ArenaAlloc(&arena, sizeof(Token));
@@ -89,8 +82,6 @@ int main(int argc, char **argv) {
         sentinel->next = sentinel;
         sentinel->prev = sentinel;
 
-        Timings token_setup_time;
-        StartTimer(&token_setup_time);
         for (int index = 0; index < loaded_file.size; index++) {
             Token *new_token = NULL;
             switch (loaded_file.data[index]) {
@@ -115,10 +106,7 @@ int main(int argc, char **argv) {
                 new_token->next->prev = new_token;
             }
         }
-        EndTimer(&token_setup_time);
 
-        Timings token_read_time;
-        StartTimer(&token_read_time);
         Token *iter_token = sentinel->next;
 
         f64 average_haversine = 0;
@@ -145,23 +133,15 @@ int main(int argc, char **argv) {
             f32 haversine      = ReferenceHaversine(x0, y0, x1, y1, EARTH_RADIUS);
             average_haversine += haversine;
         }
-        EndTimer(&token_read_time);
 
         average_haversine /= pair_count;
         printf("The number of pairs are: %d\nThe Average sum is: %f\n\n", pair_count, average_haversine);
 
-        Timings free_time;
-        StartTimer(&free_time);
 #if CUSTOM_MEMORY
         FreeArena(&arena);
 #else 
         FreeTokens(sentinel);
 #endif
-        EndTimer(&free_time);
-
-        u64 cpu_freq = GetCPUFreq();
-
-        EndTimer(&total_time);
 
         EndAndPrintProfile();
 #if 0
@@ -179,4 +159,4 @@ int main(int argc, char **argv) {
     }
 }
 
-static_assert(__COUNTER__ < ArrayCount(Profiler::anchors), "Number of profile points exceeds size of Profiler::anchors array");
+ProfilerEndOfCompilationUnit;
