@@ -1,9 +1,13 @@
 #if !defined(PROFILER_H)
 
-#include "listing_70.cpp"
+#include "platform_metrics.cpp"
 
 #ifndef PROFILER
 #define PROFILER 0
+#endif
+
+#ifndef READ_BLOCK_TIMER
+#define READ_BLOCK_TIMER ReadCPUTimer
 #endif
 
 #if PROFILER
@@ -31,12 +35,12 @@ struct Profile_Block
         old_tsc_elapsed_inclusive = anchor->tsc_elapsed_inclusive;
 
         global_profiler_parent = anchor_index;
-        start_tsc              = ReadCPUTimer();
+        start_tsc              = READ_BLOCK_TIMER();
     }
 
     ~Profile_Block()
     {
-        u64 elapsed = ReadCPUTimer() - start_tsc;
+        u64 elapsed = READ_BLOCK_TIMER() - start_tsc;
         global_profiler_parent = parent_index;
 
         Profile_Anchor *parent = global_profiler_anchors + parent_index;
@@ -102,13 +106,41 @@ static profiler global_profiler;
 
 #define TimeFunction TimeBlock(__func__)
 
+static u64 EstimateBlockTimerFreq()
+{
+    (void)&GetCPUFreq; // This has to be voided here to prevent compilers 
+                                 // from warning us that it is not used
+    u64 milliseconds_to_wait = 100;
+    u64 os_freq              = GetOSTimerFreq();
+
+    u64 block_start  = READ_BLOCK_TIMER();
+    u64 os_start     = ReadOSTimer();
+    u64 os_end       = 0;
+    u64 os_elapsed   = 0;
+    u64 os_wait_time = os_freq * milliseconds_to_wait / 1000;
+    while (os_elapsed < os_wait_time) {
+        os_end =  ReadOSTimer();
+        os_elapsed = os_end - os_start;
+    }
+
+    u64 block_end = READ_BLOCK_TIMER();
+    u64 block_elapsed = block_end - block_start;
+
+    u64 block_freq = 0;
+    if (os_elapsed) {
+        block_freq = os_freq * block_elapsed / os_elapsed;
+    }
+
+    return block_freq;
+}
+
 static void BeginProfile() {
-    global_profiler.start_tsc = ReadCPUTimer();
+    global_profiler.start_tsc = READ_BLOCK_TIMER();
 }
 
 static void EndAndPrintProfile() {
-    global_profiler.end_tsc = ReadCPUTimer();
-    u64 cpu_freq            = GetCPUFreq();
+    global_profiler.end_tsc = READ_BLOCK_TIMER();
+    u64 cpu_freq            = EstimateBlockTimerFreq();
 
     u64 total_cpu_elapsed = global_profiler.end_tsc - global_profiler.start_tsc;
 

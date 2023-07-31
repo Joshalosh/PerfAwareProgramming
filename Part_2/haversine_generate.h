@@ -19,6 +19,10 @@ typedef uint64_t u64;
 #define CUSTOM_MEMORY 1
 #define PROFILER 1
 
+#if 0
+#define READ_BLOCK_TIMER ReadOSTimer
+#endif
+
 #define ArrayCount(array) (sizeof(array) / sizeof((array)[0]))
 #define Assert(expression) if(!(expression)) {*(int *)0 = 0;}
 
