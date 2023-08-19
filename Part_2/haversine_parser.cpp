@@ -20,7 +20,7 @@ File_Content LoadFile(char* filename) {
     if (file) {
         // Get the file size
         fseek(file, 0, SEEK_END);
-        s64 file_size = ftell(file);
+        result.size = ftell(file);
         // Returning back to the beginning of the file
         // here is potentially a pointless operation if 
         // we're not going to need the contents of the file 
@@ -28,27 +28,27 @@ File_Content LoadFile(char* filename) {
         fseek(file, 0, SEEK_SET);
         
         // Allocate a buffer to hold the file contents
-        char *buffer = (char*)malloc(file_size + 1);
+        char *buffer = (char*)malloc(result.size + 1);
         if (!buffer) {
             printf("Failed to allocate memory\n");
             fclose(file);
         }
         
         if (buffer) {
+            TimeBandwidth("fread", result.size);
             // Read the file into the buffer
-            size_t read_size = fread(buffer, 1, file_size, file);
-            if (read_size != file_size) {
+            size_t read_size = fread(buffer, 1, result.size, file);
+            if (read_size != result.size) {
                 printf("Failed to read file\n");
                 free(buffer);
                 fclose(file);
             }
             
             // Null-terminate the buffer
-            buffer[file_size] = '\0';
+            buffer[result.size] = '\0';
 
             fclose(file);
             result.data = buffer;
-            result.size = file_size;
         }
     }
 
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
         s32 pair_count        = 0;
 
         {
-            TimeBlock("ComputeHaversinePairs");
+//            TimeBamdwidth("ComputeHaversinePairs", );
             while (iter_token != sentinel) {
                 s32 index           = 0;
                 f32 point_buffer[4] = {};
