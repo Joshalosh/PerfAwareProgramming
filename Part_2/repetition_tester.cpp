@@ -45,7 +45,8 @@ static void PrintTime(char const *label, f64 cpu_time, u64 cpu_timer_freq, u64 b
         printf(" (%fms)", 1000.0f*seconds);
 
         if (byte_count) {
-            f64 best_bandwidth = byte_count / (GIGABYTE * seconds);
+            f64 gigabyte = (1024.0f * 1024.0f * 1024.0f);
+            f64 best_bandwidth = byte_count / (gigabyte * seconds);
             printf(" %fgb/s", best_bandwidth);
         }
     }
@@ -57,6 +58,9 @@ static void PrintTime(char const *label, u64 cpu_time, u64 cpu_timer_freq, u64 b
 
 static void PrintResults(Repetition_Test_Results results, u64 cpu_timer_freq, u64 byte_count) {
     PrintTime("Min", (f64)results.min_time, cpu_timer_freq, byte_count);
+    printf("\n");
+
+    PrintTime("Max", (f64)results.max_time, cpu_timer_freq, byte_count);
     printf("\n");
 
     if (results.test_count) {
@@ -75,8 +79,10 @@ static void NewTestWave(Repetition_Tester *tester, u64 target_processed_byte_cou
     if (tester->mode == TestMode_Uninitialised) {
         tester->mode = TestMode_Testing;
         tester->target_processed_byte_count = target_processed_byte_count;
+        tester->cpu_timer_freq = cpu_timer_freq;
         tester->print_new_minimums = true;
         tester->results.min_time = (u64)-1;
+
     } else if (tester->mode == TestMode_Completed) {
         tester->mode = TestMode_Testing;
 
