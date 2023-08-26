@@ -83,13 +83,10 @@ static void PrintTimeElapsed(u64 total_tsc_elapsed, u64 timer_freq, Profile_Anch
     printf(")");
 
     if(anchor->processed_byte_count) {
-        f64 megabyte = 1024.f   * 1024.f;
-        f64 gigabyte = megabyte * 1024.f;
-
         f64 seconds              = (f64)anchor->tsc_elapsed_inclusive / (f64)timer_freq;
         f64 bytes_per_second     = (f64)anchor->processed_byte_count / seconds;
-        f64 megabytes            = (f64)anchor->processed_byte_count / (f64)megabyte;
-        f64 gigabytes_per_second = bytes_per_second / gigabyte;
+        f64 megabytes            = (f64)anchor->processed_byte_count / (f64)MEGABYTE;
+        f64 gigabytes_per_second = bytes_per_second / GIGABYTE;
 
         printf("  %.3fmb at %.2fgb/s", megabytes, gigabytes_per_second);
     }

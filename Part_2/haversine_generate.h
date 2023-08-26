@@ -4,6 +4,8 @@
 typedef float f32;
 typedef double f64;
 
+typedef int32_t b32;
+
 typedef int8_t s8;
 typedef int16_t s16;
 typedef int32_t s32;
@@ -18,6 +20,9 @@ typedef uint64_t u64;
 
 #define CUSTOM_MEMORY 1
 #define PROFILER 1
+
+#define MEGABYTE 1024.f * 1024.f
+#define GIGABYTE MEGABYTE * 1024.f
 
 #if 0
 #define READ_BLOCK_TIMER ReadOSTimer
