@@ -22,10 +22,17 @@ Test_Function test_functions[] = {
     {"ReadFile", ReadViaReadFile},
 };
 
-#if 0
-static File_Content AllocateBuffer(size_t count) {
+#if 1
+static File_Content AllocateBuffer(size_t size) {
     File_Content result = {};
-    result.data = (char *)malloc(
+    result.data = (char *)malloc(size);
+    if (result.data) {
+        result.size = size;
+    } else {
+        fprintf(stderr, "ERROR: Unable to allocate %llu bytes\n", size);
+    }
+
+    return result;
 }
 #endif
 
@@ -39,13 +46,13 @@ int main(int arg_count, char **args) {
         _stat64(filename, &stat);
 
         Read_Parameters params = {};
-        params.dest.data = (char *)malloc(stat.st_size);
+        params.dest = AllocateBuffer(stat.st_size);
         params.filename = filename;
 
         if (params.dest.size > 0) {
             Repetition_Tester testers[ArrayCount(test_functions)] = {};
 
-            while (true) {
+            for (;;) {
                 for (u32 func_index = 0; func_index < ArrayCount(test_functions); ++func_index)
                 {
                     Repetition_Tester *tester = testers + func_index;
