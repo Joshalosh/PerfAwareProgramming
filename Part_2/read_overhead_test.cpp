@@ -51,7 +51,7 @@ static void FreeBuffer(File_Content *file_content) {
 static void HandleAllocation(Read_Parameters *params, File_Content *file_content) {
     switch (params->alloc_type) {
         case AllocType_None:   break;
-        case AllocType_Malloc: *file_content = AllocateBuffer(params->dest.count); break;
+        case AllocType_Malloc: *file_content = AllocateBuffer(params->dest.size); break;
         default: fprintf(stderr, "ERROR: Unrecognised allocation type"); break;
     }
 }
@@ -69,6 +69,7 @@ static void ReadViaFRead(Repetition_Tester *tester, Read_Parameters *params) {
         FILE *file = fopen(params->filename, "rb");
         if (file) {
             File_Content dest_buffer = params->dest;
+            HandleAllocation(params, &dest_buffer);
 
             BeginTime(tester);
             size_t result = fread(dest_buffer.data, dest_buffer.size, 1, file);
@@ -80,6 +81,7 @@ static void ReadViaFRead(Repetition_Tester *tester, Read_Parameters *params) {
                 Error(tester, "fread failed");
             }
 
+            HandleDeallocation(params, &dest_buffer);
             fclose(file);
         } else {
             Error(tester, "fopen failed");
@@ -92,6 +94,7 @@ static void ReadViaRead(Repetition_Tester *tester, Read_Parameters *params) {
         int file = _open(params->filename, _O_BINARY|_O_RDONLY);
         if (file != -1) {
             File_Content dest_buffer = params->dest;
+            HandleAllocation(params, &dest_buffer);
 
             char *dest = dest_buffer.data;
             u64 size_remaining = dest_buffer.size;
@@ -116,6 +119,7 @@ static void ReadViaRead(Repetition_Tester *tester, Read_Parameters *params) {
                 dest += read_size;
             }
 
+            HandleDeallocation(params, &dest_buffer);
             _close(file);
         } else {
             Error(tester, "_open failed");
@@ -129,6 +133,7 @@ static void ReadViaReadFile(Repetition_Tester *tester, Read_Parameters *params) 
                                   OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
         if(file != INVALID_HANDLE_VALUE) {
             File_Content dest_buffer = params->dest;
+            HandleAllocation(params, &dest_buffer);
 
             u64 size_remaining = params->dest.size;
             u8 *dest = (u8 *)dest_buffer.data;
@@ -153,6 +158,7 @@ static void ReadViaReadFile(Repetition_Tester *tester, Read_Parameters *params) 
                 dest += read_size;
             }
 
+            HandleDeallocation(params, &dest_buffer);
             CloseHandle(file);
         } else {
             Error(tester, "CreateFileA failed");

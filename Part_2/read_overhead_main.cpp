@@ -22,20 +22,6 @@ Test_Function test_functions[] = {
     {"ReadFile", ReadViaReadFile},
 };
 
-#if 1
-static File_Content AllocateBuffer(size_t size) {
-    File_Content result = {};
-    result.data = (char *)malloc(size);
-    if (result.data) {
-        result.size = size;
-    } else {
-        fprintf(stderr, "ERROR: Unable to allocate %llu bytes\n", size);
-    }
-
-    return result;
-}
-#endif
-
 int main(int arg_count, char **args) {
     u64 cpu_timer_freq = GetCPUFreq();
 
@@ -50,17 +36,23 @@ int main(int arg_count, char **args) {
         params.filename = filename;
 
         if (params.dest.size > 0) {
-            Repetition_Tester testers[ArrayCount(test_functions)] = {};
+            Repetition_Tester testers[ArrayCount(test_functions)][AllocType_Count] = {};
 
             for (;;) {
                 for (u32 func_index = 0; func_index < ArrayCount(test_functions); ++func_index)
                 {
-                    Repetition_Tester *tester = testers + func_index;
-                    Test_Function test_func = test_functions[func_index];
+                    for (u32 alloc_type = 0; alloc_type < AllocType_Count; ++alloc_type)
+                    {
+                        params.alloc_type = (Allocation_Type)alloc_type;
 
-                    printf("\n--- %s ---\n", test_func.name);
-                    NewTestWave(tester, params.dest.size, cpu_timer_freq);
-                    test_func.func(tester, &params);
+                        Repetition_Tester *tester = &testers[func_index][alloc_type];
+                        Test_Function test_func = test_functions[func_index];
+
+                        printf("\n--- %s%s%s ---\n", DescribeAllocationType(params.alloc_type), 
+                                                     params.alloc_type ? " + " : "", test_func.name);
+                        NewTestWave(tester, params.dest.size, cpu_timer_freq);
+                        test_func.func(tester, &params);
+                    }
                 }
             }
 
