@@ -2,12 +2,67 @@
 #include <fcntl.h>
 #include <io.h>
 
+enum Allocation_Type {
+    AllocType_None,
+    AllocType_Malloc,
+
+    AllocType_Count,
+};
+
 struct Read_Parameters {
+    Allocation_Type alloc_type;
     File_Content dest;
     char const *filename;
 };
 
 typedef void read_overhead_test_func(Repetition_Tester *tester, Read_Parameters *params);
+
+static char const *DescribeAllocationType(Allocation_Type alloc_type) {
+    char const *result;
+    switch (alloc_type) {
+        case AllocType_None:   result = ""; break;
+        case AllocType_Malloc: result = "malloc"; break;
+        default:               result = "UNKNOWN"; break;
+    }
+
+    return result;
+}
+
+static File_Content AllocateBuffer(size_t size) {
+    File_Content result = {};
+    result.data = (char *)malloc(size);
+    if (result.data) {
+        result.size = size;
+    } else {
+        fprintf(stderr, "ERROR: Unable to allocate %llu bytes\n", size);
+    }
+
+    return result;
+}
+
+static void FreeBuffer(File_Content *file_content) {
+    if (file_content->data) {
+        free(file_content->data);
+    }
+    *file_content = {};
+}
+
+
+static void HandleAllocation(Read_Parameters *params, File_Content *file_content) {
+    switch (params->alloc_type) {
+        case AllocType_None:   break;
+        case AllocType_Malloc: *file_content = AllocateBuffer(params->dest.count); break;
+        default: fprintf(stderr, "ERROR: Unrecognised allocation type"); break;
+    }
+}
+
+static void HandleDeallocation(Read_Parameters *params, File_Content *file_content) {
+    switch (params->alloc_type) {
+        case AllocType_None:   break;
+        case AllocType_Malloc: FreeBuffer(file_content); break;
+        default: fprintf(stderr, "ERROR: Unrecognised allocation type"); break;
+    }
+}
 
 static void ReadViaFRead(Repetition_Tester *tester, Read_Parameters *params) {
     while (IsTesting(tester)) {
