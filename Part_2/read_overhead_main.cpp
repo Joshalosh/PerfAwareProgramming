@@ -11,18 +11,21 @@
 #include "platform_metrics.cpp"
 #include "repetition_tester.cpp"
 #include "read_overhead_test.cpp"
+#include "pagefault_overhead_test.cpp"
 
 struct Test_Function {
     char const *name;
     read_overhead_test_func *func;
 };
 Test_Function test_functions[] = {
+    {"WriteToAllBytes", WriteToAllBytes},
     {"fread", ReadViaFRead},
     {"_read", ReadViaRead},
     {"ReadFile", ReadViaReadFile},
 };
 
 int main(int arg_count, char **args) {
+    InitialiseOSMetrics();
     u64 cpu_timer_freq = GetCPUFreq();
 
     if (arg_count == 2) {

@@ -72,7 +72,7 @@ static void PrintValue(char const *label, Repetition_Value value, u64 cpu_timer_
     }
 
     if (e[RepValue_MemPageFaults] > 0) {
-        printf(" PF: %0.4f (%0.4f (%4fk/fault)", e[RepValue_MemPageFaults], e[RepValue_ByteCount] / (e[RepValue_MemPageFaults] * 1024.0));
+        printf(" PF: %0.4f (%0.4fk/fault)", e[RepValue_MemPageFaults], e[RepValue_ByteCount] / (e[RepValue_MemPageFaults] * 1024.0));
     }
 }
 
@@ -138,7 +138,7 @@ static void CountBytes(Repetition_Tester *tester, u64 byte_count) {
 
 static b32 IsTesting(Repetition_Tester *tester) {
     if (tester->mode == TestMode_Testing) {
-        Repetition_Value *accum = &tester->accumulated_on_this_test;
+        Repetition_Value accum = tester->accumulated_on_this_test;
         u64 current_time        = ReadCPUTimer();
 
         // We don't count tests that had no timing blocks
@@ -178,7 +178,7 @@ static b32 IsTesting(Repetition_Tester *tester) {
 
                 tester->open_block_count = 0;
                 tester->close_block_count = 0;
-                tester->time_accumulated_on_this_test = {};
+                tester->accumulated_on_this_test = {};
             }
         }
 
