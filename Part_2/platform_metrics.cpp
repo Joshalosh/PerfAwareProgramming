@@ -2,6 +2,13 @@
 
 #include <intrin.h>
 #include <windows.h>
+#include <psapi.h>
+
+struct OS_Metrics {
+    b32 initialised;
+    HANDLE process_handle;
+};
+static OS_Metrics global_metrics;
 
 static u64 GetOSTimerFreq() {
     LARGE_INTEGER freq;
@@ -14,6 +21,23 @@ static u64 ReadOSTimer() {
     QueryPerformanceCounter(&value);
     return value.QuadPart;
 }
+
+static u64 ReadOSPageFaultCount() {
+    PROCESS_MEMORY_COUNTERS_EX memory_counters = {};
+    memory_counters.cb = sizeof(memory_counters);
+    GetProcessMemoryInfo(global_metrics.process_handle, (PROCESS_MEMORY_COUNTERS *)&memory_counters, sizeof(memory_counters));
+
+    u64 result = memory_counters.PageFaultCount;
+    return result;
+}
+
+static void InitialiseOSMetrics() {
+    if(!global_metrics.initialised) {
+        global_metrics.initialised = true;
+        global_metrics.process_handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId());
+    }
+}
+
 
 #else 
 
@@ -30,6 +54,13 @@ static u64 ReadOsTimer() {
 
     u64 result = GetOSTimerFreq()*(u64)value.tv_sec + (u64)value.tv_usec;
     return result;
+}
+
+static u64 ReadOSPageFaultCount() {
+    return 0;
+}
+
+static void InitialiseOSMetrics() {
 }
 
 #endif
