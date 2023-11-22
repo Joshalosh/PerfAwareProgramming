@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #include "haversine_generate.h"
-#include "listing_70.cpp"
+#include "platform_metrics.cpp"
 
 int main(int arg_count, char **args) {
     u64 milliseconds_to_wait = 1000;
@@ -29,7 +29,7 @@ int main(int arg_count, char **args) {
 
     u64 cpu_end     = ReadCPUTimer();
     u64 cpu_elapsed = cpu_end - cpu_start;
-    u64 cpu_freq = GetCPUFreq(cpu_start, cpu_end, os_elapsed);
+    u64 cpu_freq = GetCPUFreq();
     printf("    OS Timer: %llu -> %llu = %llu elapsed\n", os_start, os_end, os_elapsed);
     printf("  OS Seconds: %.4f\n", (f64)os_elapsed/(f64)os_freq);
 
