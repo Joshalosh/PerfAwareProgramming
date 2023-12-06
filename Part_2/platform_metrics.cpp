@@ -1,12 +1,19 @@
+
+static u64 GetCPUFreq();
+
 #if _WIN32
 
 #include <intrin.h>
 #include <windows.h>
 #include <psapi.h>
 
+#pragma comment (lib, "advapi32.lib")
+
 struct OS_Metrics {
     b32 initialised;
+    u64 large_page_size;
     HANDLE process_handle;
+    u64 cpu_timer_freq;
 };
 static OS_Metrics global_metrics;
 
@@ -31,10 +38,33 @@ static u64 ReadOSPageFaultCount() {
     return result;
 }
 
+static u64 TryToEnableLargePages() {
+    u64 result = 0;
+    
+    HANDLE token_handle;
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &token_handle)) {
+        TOKEN_PRIVILEGES privs         = {};
+        privs.PrivilegeCount           = 1;
+        privs.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+        if (LookupPrivilegeValue(0, SE_LOCK_MEMORY_NAME, &privs.Privileges[0].Luid)) {
+            AdjustTokenPrivileges(token_handle, FALSE, &privs, 0, 0, 0);
+
+            if (GetLastError() == ERROR_SUCCESS) {
+                result = GetLargePageMinimum();
+            }
+        }
+        CloseHandle(token_handle);
+    }
+
+    return result;
+}
+
 static void InitialiseOSMetrics() {
     if(!global_metrics.initialised) {
-        global_metrics.initialised = true;
+        global_metrics.initialised    = true;
+        global_metrics.large_page_size = TryToEnableLargePages();
         global_metrics.process_handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId());
+        global_metrics.cpu_timer_freq = GetCPUFreq();
     }
 }
 
@@ -67,6 +97,16 @@ static void InitialiseOSMetrics() {
 
 inline u64 ReadCPUTimer() {
     return __rdtsc();
+}
+
+inline u64 GetCPUTimerFreq() {
+    u64 result = global_metrics.cpu_timer_freq;
+    return result;
+}
+
+inline u64 GetLargePageSize() {
+    u64 result = global_metrics.large_page_size;
+    return result;
 }
 
 static u64 GetCPUFreq() {

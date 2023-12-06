@@ -5,6 +5,8 @@
 enum Allocation_Type {
     AllocType_None,
     AllocType_Malloc,
+    AllocType_VirtualAlloc,
+    AllocType_VirtualAllocLargePages,
 
     AllocType_Count,
 };
@@ -20,9 +22,11 @@ typedef void read_overhead_test_func(Repetition_Tester *tester, Read_Parameters 
 static char const *DescribeAllocationType(Allocation_Type alloc_type) {
     char const *result;
     switch (alloc_type) {
-        case AllocType_None:   result = ""; break;
-        case AllocType_Malloc: result = "malloc"; break;
-        default:               result = "UNKNOWN"; break;
+        case AllocType_None:                   result = ""; break;
+        case AllocType_Malloc:                 result = "malloc"; break;
+        case AllocType_VirtualAlloc:           result = "virtualalloc"; break;
+        case AllocType_VirtualAllocLargePages: result = "virtualalloc (large)"; break;
+        default:                               result = "UNKNOWN"; break;
     }
 
     return result;
@@ -48,10 +52,34 @@ static void FreeBuffer(File_Content *file_content) {
 }
 
 
-static void HandleAllocation(Read_Parameters *params, File_Content *file_content) {
+static void HandleAllocation(Repetition_Tester *tester, Read_Parameters *params, 
+                             File_Content *file_content) {
     switch (params->alloc_type) {
         case AllocType_None:   break;
         case AllocType_Malloc: *file_content = AllocateBuffer(params->dest.size); break;
+        case AllocType_VirtualAlloc:
+        case AllocType_VirtualAllocLargePages: {
+            size_t alloc_size = params->dest.size;
+            DWORD flags = MEM_COMMIT|MEM_RESERVE;
+            if (params->alloc_type == AllocType_VirtualAllocLargePages) {
+                u64 large_page_size = GetLargePageSize();
+                if (large_page_size) {
+                    flags |= MEM_LARGE_PAGES;
+                    alloc_size = (alloc_size + large_page_size - 1) & ~(large_page_size - 1);
+                } else {
+                    Error(tester, "No large page support");
+                }
+            }
+
+            char *alloc_data = (char *)VirtualAlloc(0, alloc_size, flags, PAGE_READWRITE);
+            if (alloc_data) {
+                file_content->size = params->dest.size;
+                file_content->data = alloc_data;
+            } else {
+                    Error(tester, "Allocation failed");
+            }
+        } break;
+
         default: fprintf(stderr, "ERROR: Unrecognised allocation type"); break;
     }
 }
@@ -69,7 +97,7 @@ static void ReadViaFRead(Repetition_Tester *tester, Read_Parameters *params) {
         FILE *file = fopen(params->filename, "rb");
         if (file) {
             File_Content dest_buffer = params->dest;
-            HandleAllocation(params, &dest_buffer);
+            HandleAllocation(tester, params, &dest_buffer);
 
             BeginTime(tester);
             size_t result = fread(dest_buffer.data, dest_buffer.size, 1, file);
@@ -94,7 +122,7 @@ static void ReadViaRead(Repetition_Tester *tester, Read_Parameters *params) {
         int file = _open(params->filename, _O_BINARY|_O_RDONLY);
         if (file != -1) {
             File_Content dest_buffer = params->dest;
-            HandleAllocation(params, &dest_buffer);
+            HandleAllocation(tester, params, &dest_buffer);
 
             char *dest = dest_buffer.data;
             u64 size_remaining = dest_buffer.size;
@@ -133,7 +161,7 @@ static void ReadViaReadFile(Repetition_Tester *tester, Read_Parameters *params) 
                                   OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
         if(file != INVALID_HANDLE_VALUE) {
             File_Content dest_buffer = params->dest;
-            HandleAllocation(params, &dest_buffer);
+            HandleAllocation(tester, params, &dest_buffer);
 
             u64 size_remaining = params->dest.size;
             u8 *dest = (u8 *)dest_buffer.data;
