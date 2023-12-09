@@ -31,6 +31,11 @@ struct Memory_Arena {
     char *end;
 };
 
+inline b32 IsValid(File_Content buffer) {
+    b32 result = (buffer.data != 0);
+    return result;
+}
+
 void InitArena(Memory_Arena *arena, size_t size) {
     arena->start   = (char *)malloc(size);
     arena->current = arena->start;
