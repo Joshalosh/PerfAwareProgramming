@@ -38,6 +38,19 @@ static u64 ReadOSPageFaultCount() {
     return result;
 }
 
+static u64 GetMaxOSRandomCount() {
+    return 0xffffffff;
+}
+
+static b32 ReadOSRandomBytes(u64 count, void *dest) {
+    b32 result = false;
+    if (count < GetMaxOSRandomCount()) {
+        result = (BCryptGenRandom(0, (BYTE *)dest, (u32)count, BCRYPT_USE_SYSTEM_PREFERRED_RNG) != 0);
+    }
+
+    return result;
+}
+
 static u64 TryToEnableLargePages() {
     u64 result = 0;
     
@@ -133,4 +146,18 @@ static u64 GetCPUFreq() {
     }
 
     return cpu_freq;
+}
+
+inline void FillWithRandomBytes(File_Content buffer) {
+    u64 max_rand_count = GetMaxOSRandomCount();
+    u64 at_offset      = 0;
+    while (at_offset < dest.size) {
+        u64 read_count = dest.size - at_offset;
+        if (read_count > max_rand_count) {
+            read_count = max_rand_count;
+        }
+
+        ReadOSRandomBytes(read_count, dest.data + at_offset);
+        at_offset += read_count;
+    }
 }
