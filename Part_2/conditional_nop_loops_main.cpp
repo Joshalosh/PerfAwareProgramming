@@ -99,18 +99,18 @@ int main() {
 
     File_Content buffer = AllocateBuffer(1*1024*1024*1024);
 
-    if (isValid(buffer)) {
+    if (IsValid(buffer)) {
         Repetition_Tester testers[BranchPattern_Count][ArrayCount(test_functions)] = {};
         for (;;) {
             for (u32 pattern = 0; pattern < BranchPattern_Count; pattern++) {
-                char const *pattern_name = FillWithBranchPattern((branch_pattern)pattern, buffer);
+                char const *pattern_name = FillWithBranchPattern((Branch_Pattern)pattern, buffer);
 
                 for (u32 func_index = 0; func_index < ArrayCount(test_functions); func_index++) {
                     Repetition_Tester *tester = &testers[pattern][func_index];
                     Test_Function test_func   = test_functions[func_index];
 
                     printf("\n--- %s, %s ---\n", test_func.name, pattern_name);
-                    NewTestWave(tester, params.dest.size, GetCPUTimerFreq());
+                    NewTestWave(tester, buffer.size, GetCPUTimerFreq());
 
                     while (IsTesting(tester)) {
                         BeginTime(tester);

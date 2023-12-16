@@ -148,7 +148,7 @@ static u64 GetCPUFreq() {
     return cpu_freq;
 }
 
-inline void FillWithRandomBytes(File_Content buffer) {
+inline void FillWithRandomBytes(File_Content dest) {
     u64 max_rand_count = GetMaxOSRandomCount();
     u64 at_offset      = 0;
     while (at_offset < dest.size) {
