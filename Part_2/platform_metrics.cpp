@@ -8,6 +8,7 @@ static u64 GetCPUFreq();
 #include <psapi.h>
 
 #pragma comment (lib, "advapi32.lib")
+#pragma comment (lib, "bcrypt.lib")
 
 struct OS_Metrics {
     b32 initialised;
